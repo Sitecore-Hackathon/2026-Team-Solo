@@ -95,18 +95,18 @@ Create a **Full Stack Interactive Experience** in Sitecore Personalize with a **
 { "contentKey": "<string>" }
 ```
 
-**How you decide which content key to return is entirely up to you.** Use a Decision Model, a Decision Table, audience conditions, programmable logic — anything Personalize supports. The SDK doesn't care how the decision is made, only that the response contains a `contentKey` matching one of your mapped keys.
+**How you decide which content key to return is up to you** — Decision Model, Decision Table, audience conditions, programmable logic, or anything else Personalize supports. The SDK only checks that the response contains a `contentKey` matching one of your mapped keys.
 
 #### Creating the content key in Personalize
 
-The experience must return a JSON object with a `contentKey` property. How you produce that value is flexible — Decision Model, Decision Table, conditions, or programmable logic. The important part is that the output key name is `content_key` (snake_case) in the Decision Model, which maps to `contentKey` (camelCase) in the API response.
+The API response must include a top-level `contentKey` property. Key naming in your Decision Model (snake_case, PascalCase, etc.) doesn't matter — your FreeMarker template maps whatever you output into that property.
 
 **Decision Table example**
 
 1. Add a **Decision Model** to your experience.
 2. Add a **Decision Table** (e.g., "Content Key Resolver") with:
    - **Input column:** a condition (e.g., `session count` with key `session_count`)
-   - **Output column:** a string output with key `content_key`
+   - **Output column:** a string output (e.g., key `content_key` — naming is up to you)
 3. Add rules that map inputs to output values, e.g.:
    - `session_count > 1` → `"returning-visitor"`
    - (default/catch-all) → `"new-visitor"`
@@ -116,7 +116,7 @@ The experience must return a JSON object with a `contentKey` property. How you p
 
 #### Experience API response template
 
-In the experience variant's **API Response** tab, use FreeMarker to read the Decision Model output. The template below reads the first Decision Table's output — the `content_key` field you defined in the table — and returns it as `contentKey`:
+In the experience variant's **API Response** tab, use FreeMarker to read the Decision Model output. The template below reads the first Decision Table's output and returns it as `contentKey` (adjust the field name to match your Decision Table output):
 
 ```freemarker
 <#if (decisionModelResults)?? && (decisionModelResults.decisionModelResultNodes)??>

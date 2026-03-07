@@ -37,14 +37,10 @@ Verify the app is running by opening `http://localhost:5555` in your browser.
 1. Log in to the [Cloud Portal](https://portal.sitecorecloud.io).
 2. Navigate to **App Studio > Studio**.
 3. Click **Create app**.
-
-   ![App Studio - Create app](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/92bd92cb69564d548c38c3b78462e658?v=40c34943)
-
 4. Enter a name (e.g., "Personalize Connect") and select **Custom** as the app type.
-
-   ![Set name and type](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/70442747576943729d66e4d0ef94a01e?v=ce78e7d6)
-
 5. Click **Create**.
+
+   See [Register a custom app](https://doc.sitecore.com/mp/en/developers/marketplace/register-a-custom-app.html) for screenshots.
 
 ---
 
