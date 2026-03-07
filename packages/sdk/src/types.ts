@@ -63,6 +63,10 @@ export interface PersonalizeConnectProviderProps {
   /** Sitecore API key for Experience Edge (legacy). Not needed with Context ID. */
   apiKey?: string;
 
+  // --- Config loading ---
+  /** Override for the site root content tree path (e.g. "/sitecore/content/company/company"). Normally auto-discovered from the page item — only needed if auto-discovery fails. */
+  sitePath?: string;
+
   // --- Common ---
   channel?: string;
   language?: string;
@@ -99,4 +103,8 @@ export interface PersonalizeContextValue {
   sitecoreEdgeContextId: string;
   /** Site name (only set in Context ID mode) */
   siteName: string;
+  /** Configs loaded from the content tree, keyed by normalized rendering instance ID */
+  configs: Map<string, PersonalizeConnectConfig>;
+  /** Whether configs have finished loading */
+  configsLoaded: boolean;
 }

@@ -1,6 +1,6 @@
 {
   "name": "personalize-connect-sdk",
-  "version": "1.2.1",
+  "version": "1.3.1",
   "description": "Runtime SDK for Personalize Connect - resolves active experience outcomes and datasources in your rendering host",
   "author": "Dylan Young",
   "keywords": [

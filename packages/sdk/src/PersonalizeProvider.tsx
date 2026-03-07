@@ -4,8 +4,14 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { getBrowserId, getEdgeBrowserId } from "./browserId";
 import { createEdgeResolver, createEdgeProxyResolver } from "./edgeResolver";
 import { isEditingMode } from "./editingDetection";
+import { loadPageConfigs } from "./configLoader";
 import { setDebug, log, warn } from "./logger";
-import type { ComponentFields, PersonalizeConnectProviderProps, PersonalizeContextValue } from "./types";
+import type {
+  ComponentFields,
+  PersonalizeConnectConfig,
+  PersonalizeConnectProviderProps,
+  PersonalizeContextValue,
+} from "./types";
 
 const PersonalizeContext = createContext<PersonalizeContextValue | null>(null);
 
@@ -16,12 +22,34 @@ const DEFAULT_TIMEOUT = 600;
 const DEFAULT_EDGE_URL = "https://edge-platform.sitecorecloud.io";
 
 const noopResolver: (id: string) => Promise<ComponentFields> = async () => ({});
+const EMPTY_CONFIGS = new Map<string, PersonalizeConnectConfig>();
+
+function getPageItemIdFromNextData(): string | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const nd = (window as unknown as Record<string, unknown>).__NEXT_DATA__ as {
+      props?: {
+        pageProps?: {
+          layoutData?: {
+            sitecore?: {
+              route?: { itemId?: string };
+            };
+          };
+        };
+      };
+    } | undefined;
+    return nd?.props?.pageProps?.layoutData?.sitecore?.route?.itemId ?? null;
+  } catch {
+    return null;
+  }
+}
 
 export function PersonalizeProvider({
   children,
   sitecoreEdgeContextId,
   sitecoreEdgeUrl = DEFAULT_EDGE_URL,
   siteName = "",
+  sitePath,
   clientKey = "",
   pointOfSale = "",
   edgeUrl,
@@ -37,6 +65,8 @@ export function PersonalizeProvider({
   const useEdgeProxy = Boolean(sitecoreEdgeContextId);
   const [browserId, setBrowserId] = useState<string>("");
   const [detectedEditing, setDetectedEditing] = useState(false);
+  const [configs, setConfigs] = useState<Map<string, PersonalizeConnectConfig>>(EMPTY_CONFIGS);
+  const [configsLoaded, setConfigsLoaded] = useState(false);
 
   useEffect(() => {
     setDebug(debug);
@@ -49,6 +79,7 @@ export function PersonalizeProvider({
       sitecoreEdgeContextId: sitecoreEdgeContextId ?? "(none)",
       sitecoreEdgeUrl,
       siteName: siteName || "(none)",
+      sitePath: sitePath ?? "(none — configs will not be loaded from Edge)",
       clientKey: clientKey ? `${clientKey.slice(0, 8)}...` : "(none)",
       pointOfSale: pointOfSale || "(none)",
       edgeUrl: edgeUrl ?? "(none)",
@@ -60,6 +91,7 @@ export function PersonalizeProvider({
     });
   }, []);
 
+  // --- BrowserId ---
   useEffect(() => {
     if (useEdgeProxy) {
       log("BrowserId: fetching via Edge init", { sitecoreEdgeUrl, sitecoreEdgeContextId, siteName });
@@ -80,6 +112,7 @@ export function PersonalizeProvider({
     }
   }, [useEdgeProxy, sitecoreEdgeContextId, sitecoreEdgeUrl, siteName, clientKey]);
 
+  // --- Editing detection ---
   useEffect(() => {
     if (isEditingProp === undefined) {
       const detected = isEditingMode();
@@ -89,6 +122,44 @@ export function PersonalizeProvider({
       log("Editing mode overridden via prop:", isEditingProp);
     }
   }, [isEditingProp]);
+
+  // --- Config loading ---
+  useEffect(() => {
+    const pageItemId = getPageItemIdFromNextData();
+    if (!pageItemId) {
+      warn("Config loader: could not read page item ID from __NEXT_DATA__.sitecore.route.itemId — cannot load configs");
+      setConfigsLoaded(true);
+      return;
+    }
+
+    let graphqlUrl: string;
+    let headers: Record<string, string> = {};
+
+    if (useEdgeProxy) {
+      const base = sitecoreEdgeUrl.replace(/\/$/, "");
+      graphqlUrl = `${base}/v1/content/api/graphql/v1?sitecoreContextId=${encodeURIComponent(sitecoreEdgeContextId!)}`;
+    } else if (edgeUrl && apiKey) {
+      graphqlUrl = edgeUrl;
+      headers = { sc_apikey: apiKey };
+    } else {
+      warn("Config loader: no Edge endpoint available — cannot load configs");
+      setConfigsLoaded(true);
+      return;
+    }
+
+    log("Config loader: starting", { pageItemId, sitePathOverride: sitePath ?? "(auto-discover)" });
+
+    loadPageConfigs(graphqlUrl, pageItemId, language, headers, sitePath)
+      .then((loaded) => {
+        log("Config loader: complete,", loaded.size, "configs loaded");
+        setConfigs(loaded);
+        setConfigsLoaded(true);
+      })
+      .catch((err) => {
+        warn("Config loader: failed", err);
+        setConfigsLoaded(true);
+      });
+  }, [sitePath, useEdgeProxy, sitecoreEdgeContextId, sitecoreEdgeUrl, edgeUrl, apiKey, language]);
 
   const effectiveEditing = isEditingProp ?? detectedEditing;
 
@@ -105,7 +176,7 @@ export function PersonalizeProvider({
       log("Resolver: using direct Edge GraphQL", { edgeUrl });
       return createEdgeResolver(edgeUrl, apiKey, language);
     }
-    warn("Resolver: no resolver configured — resolveDatasource will return {}. Provide sitecoreEdgeContextId, edgeUrl+apiKey, or a custom resolveDatasource.");
+    warn("Resolver: no resolver configured — resolveDatasource will return {}.");
     return noopResolver;
   }, [resolveDatasource, useEdgeProxy, sitecoreEdgeUrl, sitecoreEdgeContextId, edgeUrl, apiKey, language])();
 
@@ -128,6 +199,8 @@ export function PersonalizeProvider({
       edgeProxyUrl: useEdgeProxy ? sitecoreEdgeUrl : "",
       sitecoreEdgeContextId: sitecoreEdgeContextId ?? "",
       siteName,
+      configs,
+      configsLoaded,
     }),
     [
       clientKey,
@@ -143,6 +216,8 @@ export function PersonalizeProvider({
       sitecoreEdgeUrl,
       sitecoreEdgeContextId,
       siteName,
+      configs,
+      configsLoaded,
     ]
   );
 

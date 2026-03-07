@@ -36,6 +36,9 @@ export type { GetConfigFromProps } from "./withPersonalizeConnect";
 export { usePersonalizeExperience } from "./usePersonalizeExperience";
 export type { UsePersonalizeExperienceResult } from "./usePersonalizeExperience";
 
+// Config loader (fetches PersonalizeConnect configs from Edge)
+export { loadPageConfigs } from "./configLoader";
+
 // Edge resolver (built-in datasource resolution via Experience Edge)
 export { createEdgeResolver, createEdgeProxyResolver } from "./edgeResolver";
 
