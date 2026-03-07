@@ -72,6 +72,8 @@ export interface PersonalizeConnectProviderProps {
   resolveDatasource?: (datasourceId: string) => Promise<ComponentFields>;
   /** Override editing mode detection. When true the HOC renders a visual indicator. */
   isEditing?: boolean;
+  /** Enable debug logging to the browser console. */
+  debug?: boolean;
   children: ReactNode;
 }
 

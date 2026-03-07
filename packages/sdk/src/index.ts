@@ -42,6 +42,9 @@ export { createEdgeResolver, createEdgeProxyResolver } from "./edgeResolver";
 // Editing detection
 export { isEditingMode, resetEditingDetectionCache } from "./editingDetection";
 
+// Debug logger
+export { setDebug, isDebugEnabled } from "./logger";
+
 // Utilities
 export { getBrowserId, getEdgeBrowserId, resetEdgeInitCache } from "./browserId";
 export type { EdgeInitResponse } from "./browserId";

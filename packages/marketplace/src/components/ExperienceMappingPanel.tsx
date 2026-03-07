@@ -2,7 +2,6 @@
 
 import { ContentOutcomeMapper } from "@/components/ContentOutcomeMapper";
 import { ExperiencePicker } from "@/components/ExperiencePicker";
-import { SaveButton } from "@/components/SaveButton";
 import type { DatasourceItem } from "@/hooks/usePageDatasources";
 
 interface ExperienceMappingPanelProps {
@@ -21,7 +20,6 @@ interface ExperienceMappingPanelProps {
   onAddContentKey: (key: string) => void;
   onRemoveContentKey: (key: string) => void;
   onContentMapChange: (contentKey: string, datasourceId: string) => void;
-  onSave: () => Promise<void>;
   onRefreshExperiences?: () => void;
 }
 
@@ -36,16 +34,14 @@ export function ExperienceMappingPanel({
   datasources,
   contentKeys,
   contentMap,
-  datasourcesLoading,
   onExperienceSelect,
   onAddContentKey,
   onRemoveContentKey,
   onContentMapChange,
-  onSave,
   onRefreshExperiences,
 }: ExperienceMappingPanelProps) {
   return (
-    <div className="space-y-4 rounded-lg border border-input p-4">
+    <>
       <ExperiencePicker
         experiences={experiences}
         loading={experiencesLoading}
@@ -55,22 +51,19 @@ export function ExperienceMappingPanel({
       />
 
       {selectedExperience && (
-        <>
-          <ContentOutcomeMapper
-            client={client}
-            sitecoreContextId={sitecoreContextId}
-            pagePath={pagePath}
-            contentKeys={contentKeys}
-            contentMap={contentMap}
-            datasources={datasources}
-            componentDatasourceId={componentDatasourceId}
-            onAddKey={onAddContentKey}
-            onRemoveKey={onRemoveContentKey}
-            onContentMapChange={onContentMapChange}
-          />
-          <SaveButton onSave={onSave} disabled={datasourcesLoading} />
-        </>
+        <ContentOutcomeMapper
+          client={client}
+          sitecoreContextId={sitecoreContextId}
+          pagePath={pagePath}
+          contentKeys={contentKeys}
+          contentMap={contentMap}
+          datasources={datasources}
+          componentDatasourceId={componentDatasourceId}
+          onAddKey={onAddContentKey}
+          onRemoveKey={onRemoveContentKey}
+          onContentMapChange={onContentMapChange}
+        />
       )}
-    </div>
+    </>
   );
 }

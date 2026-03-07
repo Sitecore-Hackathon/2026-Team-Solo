@@ -54,11 +54,12 @@ export function usePersonalizeExperiences(credentials: PersonalizeCredentials | 
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? `API error: ${res.status}`);
       const all: PersonalizeExperience[] = Array.isArray(data) ? data : [];
-      const INTERACTIVE_TYPES = ["INTERACTIVE_API_FLOW", "INTERACTIVE_WEB_FLOW"];
-      setExperiences(all.filter((f) =>
-        f.subtype?.toUpperCase() === "EXPERIENCE" &&
-        INTERACTIVE_TYPES.includes(f.type?.toUpperCase() ?? "")
-      ));
+      const isInteractiveExperience = (f: PersonalizeExperience) => {
+        const sub = (f.subtype ?? "").toUpperCase();
+        const typ = (f.type ?? "").toUpperCase();
+        return sub === "EXPERIENCE" && typ.includes("INTERACTIVE");
+      };
+      setExperiences(all.filter(isInteractiveExperience));
     } catch (e) {
       setError(e instanceof Error ? e : new Error(String(e)));
       setExperiences([]);

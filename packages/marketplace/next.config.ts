@@ -3,6 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   pageExtensions: ["ts", "tsx", "js", "jsx"],
+  devIndicators: false,
   outputFileTracingRoot: path.join(process.cwd()),
   async headers() {
     return [

@@ -38,7 +38,11 @@ export async function listFlows(
   apiBaseUrl: string,
   accessToken: string
 ): Promise<PersonalizeFlow[]> {
-  const res = await fetch(`${apiBaseUrl}/v3/flowDefinitions`, {
+  const url = new URL(`${apiBaseUrl}/v3/flowDefinitions`);
+  url.searchParams.set("expand", "true");
+  url.searchParams.set("offset", "0");
+  url.searchParams.set("limit", "10000");
+  const res = await fetch(url.toString(), {
     headers: {
       Authorization: `Bearer ${accessToken}`,
       Accept: "application/json",

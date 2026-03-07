@@ -1,7 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { Plus, X } from "lucide-react";
 import type { ClientSDK } from "@sitecore-marketplace-sdk/client";
+import { executeGraphQL } from "@/lib/graphql";
 import { Button } from "@/components/ui/button";
 import { DatasourceSelector } from "@/components/DatasourceSelector";
 import { Input } from "@/components/ui/input";
@@ -44,17 +46,62 @@ export function ContentOutcomeMapper({
     setPathCache((prev) => ({ ...fromDatasources, ...prev }));
   }, [datasources]);
 
-  const getDisplayPath = (id: string) =>
-    pathCache[id] ?? datasources.find((ds) => ds.itemId === id)?.path ?? id;
+  // Fetch paths for item IDs we don't have (e.g. from saved config)
+  const fetchItemPath = useCallback(
+    async (itemId: string): Promise<string | null> => {
+      if (!client || !sitecoreContextId) return null;
+      try {
+        const data = await executeGraphQL<{
+          item?: { path?: string; name?: string } | null;
+        }>(
+          client,
+          sitecoreContextId,
+          `query {
+            item(where: { database: "master", itemId: "${itemId.replace(/[{}]/g, "")}" }) {
+              path
+              name
+            }
+          }`
+        );
+        const path = data?.item?.path;
+        const name = data?.item?.name;
+        return path ?? (name ? `/${name}` : null);
+      } catch {
+        return null;
+      }
+    },
+    [client, sitecoreContextId]
+  );
+
+  useEffect(() => {
+    const missing = contentKeys
+      .map((k) => contentMap[k])
+      .filter((id): id is string => Boolean(id))
+      .filter((id) => !pathCache[id]);
+    if (missing.length === 0 || !client || !sitecoreContextId) return;
+    let cancelled = false;
+    (async () => {
+      for (const id of [...new Set(missing)]) {
+        if (cancelled) return;
+        const path = await fetchItemPath(id);
+        if (cancelled) return;
+        if (path) setPathCache((prev) => ({ ...prev, [id]: path }));
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [contentKeys, contentMap, pathCache, client, sitecoreContextId, fetchItemPath]);
+
+  const getDisplayName = (id: string) => {
+    const path = pathCache[id] ?? datasources.find((ds) => ds.itemId === id)?.path;
+    if (!path) return null;
+    const segments = path.split("/");
+    return segments[segments.length - 1] || path;
+  };
 
   const handleDatasourceSelect = (contentKey: string, itemId: string, path: string) => {
     onContentMapChange(contentKey, itemId);
     setPathCache((prev) => ({ ...prev, [itemId]: path }));
   };
-
-  const componentDatasourcePath =
-    componentDatasourceId &&
-    (datasources.find((ds) => ds.itemId === componentDatasourceId)?.path ?? componentDatasourceId);
 
   const handleAdd = () => {
     const k = newKey.trim().replace(/"/g, "");
@@ -64,96 +111,75 @@ export function ContentOutcomeMapper({
     }
   };
 
+  if (pickerKey) {
+    return (
+      <DatasourceSelector
+        client={client}
+        sitecoreContextId={sitecoreContextId}
+        rootPath={pagePath}
+        open={true}
+        onOpenChange={() => setPickerKey(null)}
+        onSelect={(id, path) => {
+          handleDatasourceSelect(pickerKey, id, path);
+          setPickerKey(null);
+        }}
+        selectedId={contentMap[pickerKey] || undefined}
+      />
+    );
+  }
+
   return (
-    <div className="space-y-4 relative">
-      {pickerKey ? (
-        <DatasourceSelector
-          client={client}
-          sitecoreContextId={sitecoreContextId}
-          rootPath={pagePath}
-          open={true}
-          onOpenChange={() => setPickerKey(null)}
-          onSelect={(id, path) => {
-            handleDatasourceSelect(pickerKey, id, path);
-            setPickerKey(null);
-          }}
-          selectedId={contentMap[pickerKey] || undefined}
-        />
-      ) : (
-        <>
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h3 className="text-sm font-medium">Content outcomes</h3>
-              <p className="mt-0.5 text-xs text-muted-foreground">
-                Map experience keys to datasources. Ensure the experience returns one of these keys.
-              </p>
-            </div>
-            {componentDatasourcePath && (
-              <div className="rounded-md border border-input bg-muted/30 px-2.5 py-1.5 text-xs">
-                <span className="text-muted-foreground">Component: </span>
-                <span className="font-mono">{componentDatasourcePath}</span>
+    <div className="space-y-3">
+      <p className="text-xs text-muted-foreground">
+        Define which content to show for each variation the experience returns.
+      </p>
+
+      {contentKeys.length > 0 && (
+        <div className="flex flex-col gap-2">
+          {contentKeys.map((key) => (
+            <div
+              key={key}
+              className="group flex items-center gap-3 bg-muted px-3 py-2 transition-colors hover:bg-background"
+            >
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{key}</p>
+                <button
+                  type="button"
+                  className="text-xs text-primary hover:underline truncate block max-w-full mt-0.5 text-left"
+                  onClick={() => setPickerKey(key)}
+                  title={contentMap[key] ? `Item ID: ${contentMap[key]}` : undefined}
+                >
+                  {contentMap[key]
+                    ? (getDisplayName(contentMap[key]) ?? "Content item")
+                    : "Choose content item..."}
+                </button>
               </div>
-            )}
-          </div>
-
-          <div className="space-y-3">
-            {contentKeys.length > 0 && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between gap-4">
-                  <span className="text-xs font-medium text-muted-foreground">Content key</span>
-                  <span className="text-xs font-medium text-muted-foreground">Datasource</span>
-                </div>
-                {contentKeys.map((key) => (
-                  <div key={key} className="flex items-center gap-2">
-                    <span className="w-32 shrink-0 truncate rounded-md border border-input bg-background px-2 py-1.5 text-sm font-mono">
-                      &quot;{key}&quot;
-                    </span>
-                    <Button
-                      type="button"
-                      variant="outline"
-                      className="min-w-0 flex-1 justify-between font-normal"
-                      onClick={() => setPickerKey(key)}
-                    >
-                      <span className="truncate">
-                        {contentMap[key] ? getDisplayPath(contentMap[key]) : "Select datasource"}
-                      </span>
-                      <span className="shrink-0 opacity-50">▼</span>
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8 shrink-0 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
-                      onClick={() => onRemoveKey(key)}
-                      aria-label={`Remove ${key}`}
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </Button>
-                  </div>
-            ))}
-          </div>
-        )}
-
-            <div className="flex items-center gap-2">
-              <Input
-                placeholder='Add key, e.g. "new-visitor"'
-                value={newKey}
-                onChange={(e) => setNewKey(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAdd())}
-                className="h-8 flex-1 text-sm sm:max-w-[200px]"
-              />
-              <Button type="button" variant="outline" size="sm" onClick={handleAdd} className="gap-1.5">
-                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-                </svg>
-                Add key
-              </Button>
+              <button
+                type="button"
+                className="shrink-0 h-6 w-6 flex items-center justify-center rounded-full text-muted-foreground opacity-0 group-hover:opacity-100 hover:bg-background hover:text-foreground transition-all"
+                onClick={() => onRemoveKey(key)}
+                aria-label={`Remove ${key}`}
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
             </div>
-          </div>
-        </>
+          ))}
+        </div>
       )}
+
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="e.g. new-visitor"
+          value={newKey}
+          onChange={(e) => setNewKey(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAdd())}
+          className="h-9 flex-1 text-sm"
+        />
+        <Button type="button" variant="outline" onClick={handleAdd} className="gap-1.5 shrink-0 h-9 text-sm">
+          <Plus className="h-3.5 w-3.5" />
+          Add variation
+        </Button>
+      </div>
     </div>
   );
 }

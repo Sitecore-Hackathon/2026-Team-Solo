@@ -4,6 +4,7 @@
  */
 
 import type { ComponentFields, PersonalizeConnectConfig } from "./types";
+import { log, warn, error as logError } from "./logger";
 
 export interface ResolveContentOptions {
   contentKey: string | null;
@@ -26,17 +27,33 @@ export async function resolveContent(
 ): Promise<ResolvedContent | null> {
   const { contentKey, config, resolveDatasource } = options;
 
-  const effectiveKey =
-    contentKey && contentKey in config.contentMap ? contentKey : config.defaultKey;
-  const datasourceId = config.contentMap[effectiveKey];
+  const keyInMap = contentKey && contentKey in config.contentMap;
+  const effectiveKey = keyInMap ? contentKey! : config.defaultKey;
 
-  if (!datasourceId || typeof datasourceId !== "string") return null;
+  if (!keyInMap) {
+    warn(
+      `Content key "${contentKey}" not found in contentMap [${Object.keys(config.contentMap).join(", ")}], falling back to defaultKey "${config.defaultKey}"`
+    );
+  }
+
+  const datasourceId = config.contentMap[effectiveKey];
+  log("Resolving datasource:", { effectiveKey, datasourceId });
+
+  if (!datasourceId || typeof datasourceId !== "string") {
+    warn(`No datasource ID for key "${effectiveKey}" — contentMap may be misconfigured`);
+    return null;
+  }
 
   try {
     const fields = await resolveDatasource(datasourceId);
-    if (!fields || typeof fields !== "object") return null;
+    if (!fields || typeof fields !== "object") {
+      warn("resolveDatasource returned empty/invalid fields for", datasourceId);
+      return null;
+    }
+    log("Datasource resolved:", { datasourceId, fieldNames: Object.keys(fields) });
     return { datasourceId, fields };
-  } catch {
+  } catch (e) {
+    logError("resolveDatasource threw for", datasourceId, e);
     return null;
   }
 }

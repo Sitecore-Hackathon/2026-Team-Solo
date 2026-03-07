@@ -2,7 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import type { ClientSDK } from "@sitecore-marketplace-sdk/client";
-import { loadConfig, saveConfig, type PersonalizeConnectConfig } from "@/lib/config-store";
+import {
+  loadConfig,
+  loadConfigRenderingIdsForPage,
+  saveConfig,
+  type PersonalizeConnectConfig,
+} from "@/lib/config-store";
 import type { PageRendering } from "@/hooks/usePageComponents";
 import type { PersonalizeExperienceDetail } from "@/hooks/usePersonalizeExperiences";
 
@@ -11,6 +16,7 @@ interface UseComponentConfigOptions {
   sitecoreContextId: string;
   sitePath: string;
   pageId: string;
+  components: PageRendering[];
   fetchExperienceDetail: (id: string) => Promise<PersonalizeExperienceDetail | null>;
 }
 
@@ -19,6 +25,7 @@ export function useComponentConfig({
   sitecoreContextId,
   sitePath,
   pageId,
+  components,
   fetchExperienceDetail,
 }: UseComponentConfigOptions) {
   const [selectedRendering, setSelectedRendering] = useState<PageRendering | null>(null);
@@ -44,6 +51,12 @@ export function useComponentConfig({
   useEffect(() => {
     if (!selectedRendering || !client || !sitecoreContextId || !pageId) {
       setExistingConfig(null);
+      if (!selectedRendering) {
+        setSelectedExperience(null);
+        setExperienceDetail(null);
+        setContentKeys([]);
+        setContentMap({});
+      }
       return;
     }
 
@@ -91,6 +104,29 @@ export function useComponentConfig({
     sitePath,
     fetchExperienceDetail,
   ]);
+
+  // Pre-load which components have configs (for "Experience Linked" badges)
+  useEffect(() => {
+    if (!client || !sitecoreContextId || !sitePath || !pageId || components.length === 0) return;
+    let stale = false;
+    (async () => {
+      const renderingIdsWithConfig = await loadConfigRenderingIdsForPage(
+        client,
+        sitecoreContextId,
+        sitePath,
+        pageId
+      );
+      if (stale) return;
+      const next: Record<string, boolean> = {};
+      for (const c of components) {
+        next[c.instanceId] = renderingIdsWithConfig.has(c.renderingId);
+      }
+      setConfigMap((prev) => ({ ...prev, ...next }));
+    })();
+    return () => {
+      stale = true;
+    };
+  }, [client, sitecoreContextId, sitePath, pageId, components]);
 
   useEffect(() => {
     if (!selectedRendering) return;

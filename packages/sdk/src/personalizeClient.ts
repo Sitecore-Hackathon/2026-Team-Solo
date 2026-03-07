@@ -7,6 +7,7 @@
 
 import type { CallFlowsRequest, PersonalizeConnectConfig, PersonalizeConnectResponse } from "./types";
 import type { PersonalizeContextValue } from "./types";
+import { log, warn, error as logError, group, groupEnd } from "./logger";
 
 const DEFAULT_API_BASE = "https://api.boxever.com";
 
@@ -22,10 +23,26 @@ export interface CallPersonalizeOptions {
 export async function callPersonalize(options: CallPersonalizeOptions): Promise<string | null> {
   const { config, context, apiBase = DEFAULT_API_BASE, componentRef, pageRoute } = options;
 
-  if (context.useEdgeProxy) {
-    return callViaEdgeProxy(config, context, componentRef, pageRoute);
+  group(`callPersonalize [${config.friendlyId}]`);
+  log("Config:", { friendlyId: config.friendlyId, defaultKey: config.defaultKey, contentMapKeys: Object.keys(config.contentMap) });
+  log("BrowserId:", context.browserId || "(empty — call will likely fail)");
+
+  if (!context.browserId) {
+    warn("BrowserId is empty — personalize call may fail or return default");
   }
-  return callViaLegacy(config, context, apiBase, componentRef, pageRoute);
+
+  let result: string | null;
+  if (context.useEdgeProxy) {
+    log("Route: Edge proxy");
+    result = await callViaEdgeProxy(config, context, componentRef, pageRoute);
+  } else {
+    log("Route: Legacy /v2/callFlows", { apiBase });
+    result = await callViaLegacy(config, context, apiBase, componentRef, pageRoute);
+  }
+
+  log("Result contentKey:", result ?? "(null — will use defaultKey)");
+  groupEnd();
+  return result;
 }
 
 async function callViaEdgeProxy(
@@ -55,6 +72,9 @@ async function callViaEdgeProxy(
     body.params = params;
   }
 
+  log("Edge proxy POST", url);
+  log("Request body:", body);
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), context.timeout);
 
@@ -66,10 +86,18 @@ async function callViaEdgeProxy(
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    if (!res.ok) return null;
-    return extractContentKey(await res.json());
-  } catch {
+    log("Edge proxy response status:", res.status);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      warn("Edge proxy non-OK response:", res.status, text);
+      return null;
+    }
+    const data = await res.json();
+    log("Edge proxy response body:", data);
+    return extractContentKey(data);
+  } catch (e) {
     clearTimeout(timeoutId);
+    logError("Edge proxy fetch error:", e);
     return null;
   }
 }
@@ -97,21 +125,33 @@ async function callViaLegacy(
     if (pageRoute) body.params.pageRoute = pageRoute;
   }
 
+  const url = `${apiBase.replace(/\/$/, "")}/v2/callFlows`;
+  log("Legacy POST", url);
+  log("Request body:", body);
+
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), context.timeout);
 
   try {
-    const res = await fetch(`${apiBase.replace(/\/$/, "")}/v2/callFlows`, {
+    const res = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
       signal: controller.signal,
     });
     clearTimeout(timeoutId);
-    if (!res.ok) return null;
-    return extractContentKey(await res.json());
-  } catch {
+    log("Legacy response status:", res.status);
+    if (!res.ok) {
+      const text = await res.text().catch(() => "");
+      warn("Legacy non-OK response:", res.status, text);
+      return null;
+    }
+    const data = await res.json();
+    log("Legacy response body:", data);
+    return extractContentKey(data);
+  } catch (e) {
     clearTimeout(timeoutId);
+    logError("Legacy fetch error:", e);
     return null;
   }
 }

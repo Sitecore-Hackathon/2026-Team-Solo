@@ -194,6 +194,53 @@ export function getConfigPath(sitePath: string, pageId: string): string {
   return `${sitePath}/Data/PersonalizeConnect/${pageId}`;
 }
 
+/**
+ * Returns the set of renderingIds that have saved configs for this page.
+ * Used to show "Experience Linked" badges before the user selects a component.
+ */
+export async function loadConfigRenderingIdsForPage(
+  client: ClientSDK,
+  sitecoreContextId: string,
+  sitePath: string,
+  pageId: string
+): Promise<Set<string>> {
+  const configPath = getConfigPath(sitePath, pageId);
+  const data = await executeGraphQL<{
+    item?: {
+      children?: {
+        nodes?: Array<{ name: string; fields?: { nodes?: Array<{ name: string; value: string }> } }>;
+      };
+    };
+  }>(
+    client,
+    sitecoreContextId,
+    `query {
+      item(where: { database: "master", path: "${configPath}" }) {
+        children {
+          nodes {
+            name
+            fields(ownFields: true) {
+              nodes { name value }
+            }
+          }
+        }
+      }
+    }`
+  );
+  const nodes = data?.item?.children?.nodes ?? [];
+  const ids = new Set<string>();
+  for (const node of nodes) {
+    if (node.name.startsWith("config-")) {
+      const renderingId = node.name.slice(7);
+      if (renderingId) ids.add(renderingId);
+    } else {
+      const renderingField = node.fields?.nodes?.find((f) => f.name === "RenderingId");
+      if (renderingField?.value) ids.add(renderingField.value);
+    }
+  }
+  return ids;
+}
+
 export async function loadConfig(
   client: ClientSDK,
   sitecoreContextId: string,

@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
+import { ChevronRight, File, Folder, FolderOpen, Loader2, Search, X } from "lucide-react";
 import type { ClientSDK } from "@sitecore-marketplace-sdk/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,67 +20,19 @@ interface DatasourceSelectorProps {
 
 function Chevron({ expanded }: { expanded: boolean }) {
   return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className={cn("shrink-0 transition-transform text-muted-foreground", expanded && "rotate-90")}
-    >
-      <path d="m9 18 6-6-6-6" />
-    </svg>
+    <ChevronRight
+      className={cn("h-4 w-4 shrink-0 transition-transform text-muted-foreground", expanded && "rotate-90")}
+    />
   );
 }
 
 function FolderIcon({ open }: { open: boolean }) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0 text-amber-500/90"
-    >
-      {open ? (
-        <>
-          <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-          <path d="M2 10h20" />
-        </>
-      ) : (
-        <path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z" />
-      )}
-    </svg>
-  );
+  const Icon = open ? FolderOpen : Folder;
+  return <Icon className="h-[18px] w-[18px] shrink-0 text-amber-500/90" />;
 }
 
-function FileIcon() {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="18"
-      height="18"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      className="shrink-0 text-blue-500/90"
-    >
-      <path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z" />
-      <path d="M14 2v4a2 2 0 0 0 2 2h4" />
-    </svg>
-  );
+function FileIconEl() {
+  return <File className="h-[18px] w-[18px] shrink-0 text-blue-500/90" />;
 }
 
 function TreeRow({
@@ -139,7 +92,7 @@ function TreeRow({
           {hasChildren ? (
             <FolderIcon open={isExpanded} />
           ) : (
-            <FileIcon />
+            <FileIconEl />
           )}
           <span className="truncate">
             {node.name || node.path.split("/").pop() || "Untitled"}
@@ -255,7 +208,7 @@ export function DatasourceSelector({
         <div>
           <h3 className="text-sm font-semibold">Assign content item</h3>
           <p className="text-xs text-muted-foreground mt-0.5">
-            Select a datasource. Expand folders to navigate.
+            Browse folders to find the content item you want to use.
           </p>
         </div>
         <Button
@@ -265,41 +218,13 @@ export function DatasourceSelector({
           onClick={() => onOpenChange(false)}
           aria-label="Close"
         >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M18 6 6 18" />
-            <path d="m6 6 12 12" />
-          </svg>
+          <X className="h-4 w-4" />
           <span>Back</span>
         </Button>
       </div>
       <div className="flex flex-col gap-3 flex-1 min-h-0 p-4 overflow-hidden">
         <div className="relative shrink-0">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <circle cx="11" cy="11" r="8" />
-              <path d="m21 21-4.35-4.35" />
-            </svg>
-          </span>
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Search items..."
             value={search}
@@ -310,27 +235,7 @@ export function DatasourceSelector({
         <div className="flex-1 min-h-0 overflow-auto rounded-md border border-border bg-muted/30">
           {loading && rootNodes.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 gap-2 text-muted-foreground">
-              <svg
-                className="animate-spin h-6 w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                aria-hidden
-              >
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
-              </svg>
+              <Loader2 className="h-6 w-6 animate-spin" aria-hidden />
               <span className="text-sm">Loading...</span>
             </div>
           ) : (

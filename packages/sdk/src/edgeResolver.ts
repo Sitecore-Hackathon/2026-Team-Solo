@@ -6,6 +6,7 @@
  */
 
 import type { ComponentFields } from "./types";
+import { log, warn, error as logError } from "./logger";
 
 const ITEM_QUERY = `
   query GetDatasourceItem($itemId: String!, $language: String!) {
@@ -48,6 +49,8 @@ async function queryEdge(
   datasourceId: string,
   language: string
 ): Promise<ComponentFields> {
+  log("Edge GraphQL request:", { url, datasourceId, language });
+
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
@@ -57,20 +60,31 @@ async function queryEdge(
     }),
   });
 
+  log("Edge GraphQL response status:", res.status);
+
   if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    logError("Edge GraphQL non-OK response:", res.status, text);
     throw new Error(`Experience Edge request failed: ${res.status}`);
   }
 
   const json: EdgeItemResponse = await res.json();
 
   if (json.errors?.length) {
-    throw new Error(json.errors.map((e) => e.message ?? String(e)).join("; "));
+    const msg = json.errors.map((e) => e.message ?? String(e)).join("; ");
+    logError("Edge GraphQL errors:", msg);
+    throw new Error(msg);
   }
 
   const fields = json.data?.item?.fields;
-  if (!fields || !Array.isArray(fields)) return {};
+  if (!fields || !Array.isArray(fields)) {
+    warn("Edge GraphQL: item not found or has no fields for", datasourceId);
+    return {};
+  }
 
-  return mapFields(fields);
+  const mapped = mapFields(fields);
+  log("Edge GraphQL resolved fields:", { datasourceId, fieldCount: Object.keys(mapped).length, fieldNames: Object.keys(mapped) });
+  return mapped;
 }
 
 /**

@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { callPersonalize } from "./personalizeClient";
 import { resolveContent } from "./contentResolver";
 import { usePersonalizeContext } from "./PersonalizeProvider";
+import { log, warn, group, groupEnd } from "./logger";
 import type { ComponentFields, PersonalizeConnectConfig } from "./types";
 
 export type GetConfigFromProps<P> = (props: P) => PersonalizeConnectConfig | undefined;
@@ -39,40 +40,60 @@ const INDICATOR_BADGE: CSSProperties = {
 };
 
 /**
- * HOC that wraps any JSS/Content SDK component.
+ * HOC that wraps any JSS component.
  * If the rendering has a personalizeConnect config, it renders with defaultKey first,
  * then asynchronously fetches the personalized content and re-renders.
  * If no config, passes through unchanged.
  *
- * In editing mode (Page Builder / Experience Editor), renders a visual
- * indicator (border + badge) on components that have personalization configured.
+ * In Page Builder, renders a visual indicator (border + badge) on
+ * components that have personalization configured.
  */
 export function withPersonalizeConnect<P extends object>(
   WrappedComponent: ComponentType<P>,
   getConfig: GetConfigFromProps<P> = DEFAULT_GET_CONFIG as GetConfigFromProps<P>
 ): ComponentType<P> {
+  const componentName = WrappedComponent.displayName ?? WrappedComponent.name ?? "Component";
+
   function PersonalizeConnectWrapper(props: P) {
     const context = usePersonalizeContext();
     const config = getConfig(props);
     const [resolvedFields, setResolvedFields] = useState<ComponentFields | null>(null);
     const mountedRef = useRef(true);
 
+    if (!config) {
+      log(`[${componentName}] No personalizeConnect config on rendering — passthrough`);
+    } else {
+      log(`[${componentName}] Config found:`, { friendlyId: config.friendlyId, defaultKey: config.defaultKey, keys: Object.keys(config.contentMap) });
+    }
+
+    if (!context) {
+      warn(`[${componentName}] PersonalizeContext is null — is PersonalizeProvider mounted?`);
+    }
+
     const runPersonalization = useCallback(async () => {
       if (!config || !context) return;
 
-      const contentKey = await callPersonalize({ config, context });
-      if (!mountedRef.current) return;
+      group(`[${componentName}] personalization flow`);
+      log("Calling Personalize for experience:", config.friendlyId);
 
+      const contentKey = await callPersonalize({ config, context });
+      if (!mountedRef.current) { groupEnd(); return; }
+
+      log("Resolving content for contentKey:", contentKey ?? "(null)");
       const resolved = await resolveContent({
         contentKey,
         config,
         resolveDatasource: context.resolveDatasource,
       });
-      if (!mountedRef.current) return;
+      if (!mountedRef.current) { groupEnd(); return; }
 
       if (resolved) {
+        log(`[${componentName}] Fields resolved — swapping props.fields`, { datasourceId: resolved.datasourceId, fieldNames: Object.keys(resolved.fields) });
         setResolvedFields(resolved.fields);
+      } else {
+        warn(`[${componentName}] Content resolution returned null — component keeps original fields`);
       }
+      groupEnd();
     }, [config, context]);
 
     useEffect(() => {
@@ -96,6 +117,7 @@ export function withPersonalizeConnect<P extends object>(
     const component = <WrappedComponent {...mergedProps} />;
 
     if (context.isEditing) {
+      log(`[${componentName}] Editing mode — rendering indicator badge`);
       return (
         <div style={INDICATOR_BORDER} data-personalize-connect={config.friendlyId}>
           <span style={INDICATOR_BADGE} title={`Personalize: ${config.friendlyId}`}>
@@ -109,9 +131,7 @@ export function withPersonalizeConnect<P extends object>(
     return component;
   }
 
-  PersonalizeConnectWrapper.displayName = `WithPersonalizeConnect(${
-    WrappedComponent.displayName ?? WrappedComponent.name ?? "Component"
-  })`;
+  PersonalizeConnectWrapper.displayName = `WithPersonalizeConnect(${componentName})`;
 
   return PersonalizeConnectWrapper;
 }

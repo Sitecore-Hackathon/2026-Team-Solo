@@ -5,6 +5,8 @@
  * Context ID mode: fetched from Edge proxy /v1/init, stored in cookie sc_<contextId>_personalize.
  */
 
+import { log, warn, error as logError } from "./logger";
+
 const LEGACY_COOKIE_PREFIX = "bid_";
 const CONTEXT_COOKIE_PREFIX = "sc_";
 const CONTEXT_COOKIE_SUFFIX = "_personalize";
@@ -52,6 +54,9 @@ export function getBrowserId(clientKey: string): string {
   if (!bid || typeof bid !== "string" || bid.length < 10) {
     bid = generateBrowserId();
     setCookie(cookieName, bid);
+    log("BrowserId (legacy): generated new", bid, `cookie=${cookieName}`);
+  } else {
+    log("BrowserId (legacy): from cookie", bid, `cookie=${cookieName}`);
   }
   return bid;
 }
@@ -75,7 +80,12 @@ export async function getEdgeBrowserId(
 ): Promise<string> {
   const cookieName = CONTEXT_COOKIE_PREFIX + contextId + CONTEXT_COOKIE_SUFFIX;
   const cached = getCookie(cookieName);
-  if (cached && cached.length >= 10) return cached;
+  if (cached && cached.length >= 10) {
+    log("BrowserId (edge): from cookie", cached, `cookie=${cookieName}`);
+    return cached;
+  }
+
+  log("BrowserId (edge): cookie miss, calling /v1/init", { edgeUrl, contextId, siteName });
 
   if (!edgeInitPromise) {
     edgeInitPromise = fetchEdgeInit(edgeUrl, contextId, siteName);
@@ -83,9 +93,11 @@ export async function getEdgeBrowserId(
 
   try {
     const result = await edgeInitPromise;
+    log("BrowserId (edge): init returned", result);
     setCookie(cookieName, result.browserId);
     return result.browserId;
-  } catch {
+  } catch (e) {
+    warn("BrowserId (edge): init failed, generating fallback", e);
     const fallback = generateBrowserId();
     setCookie(cookieName, fallback);
     return fallback;
@@ -102,13 +114,19 @@ async function fetchEdgeInit(
   const base = edgeUrl.replace(/\/$/, "");
   const url = `${base}/v1/init?sitecoreContextId=${encodeURIComponent(contextId)}&siteName=${encodeURIComponent(siteName)}`;
 
+  log("BrowserId (edge): GET", url);
   const res = await fetch(url, { method: "GET" });
+  log("BrowserId (edge): init response status:", res.status);
+
   if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    logError("BrowserId (edge): init non-OK:", res.status, text);
     throw new Error(`Edge init failed: ${res.status}`);
   }
 
   const data = (await res.json()) as EdgeInitResponse;
   if (!data.browserId || typeof data.browserId !== "string") {
+    logError("BrowserId (edge): init response missing browserId", data);
     throw new Error("Edge init response missing browserId");
   }
   return data;

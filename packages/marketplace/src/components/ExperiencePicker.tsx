@@ -1,5 +1,6 @@
 "use client";
 
+import { RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -27,7 +28,6 @@ export function ExperiencePicker({
 }: ExperiencePickerProps) {
   return (
     <div className="space-y-2">
-      <p className="text-sm font-medium">Link to Experience</p>
       <div className="flex gap-2">
         <Select
           value={selectedExperience?.id ?? ""}
@@ -55,18 +55,13 @@ export function ExperiencePicker({
         <Button
           type="button"
           variant="outline"
-          size="icon"
+          className="h-9 w-9 p-0"
           onClick={onRefresh}
           disabled={loading}
           title="Refresh experiences"
           aria-label="Refresh experiences"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 12a9 9 0 0 0-9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
-            <path d="M3 3v5h5" />
-            <path d="M3 12a9 9 0 0 0 9 9 9.75 9.75 0 0 0 6.74-2.74L21 16" />
-            <path d="M16 21h5v-5" />
-          </svg>
+          <RefreshCw className="h-4 w-4" />
         </Button>
       </div>
     </div>
