@@ -6,18 +6,29 @@ import type { ClientSDK } from "@sitecore-marketplace-sdk/client";
 import { saveCredentials } from "@/lib/credentials-store";
 
 // Maps to https://api-engage-{region}.sitecorecloud.io
-const REGIONS = [
+export const REGIONS = [
   { value: "ap", label: "AP Region" },
   { value: "eu", label: "EU Region" },
   { value: "jpe", label: "JP Region" },
   { value: "us", label: "US Region" },
 ] as const;
 
+export function getRegionLabel(value: string): string {
+  return REGIONS.find((r) => r.value === value)?.label ?? value;
+}
+
+export interface InitialCredentials {
+  apiKey: string;
+  region: string;
+}
+
 interface ConnectWizardProps {
   client: ClientSDK;
   sitecoreContextId: string;
   sitePath: string;
   onComplete: () => void;
+  initialCredentials?: InitialCredentials;
+  onCancel?: () => void;
 }
 
 export function ConnectWizard({
@@ -25,10 +36,12 @@ export function ConnectWizard({
   sitecoreContextId,
   sitePath,
   onComplete,
+  initialCredentials,
+  onCancel,
 }: ConnectWizardProps) {
-  const [apiKey, setApiKey] = useState("");
+  const [apiKey, setApiKey] = useState(initialCredentials?.apiKey ?? "");
   const [apiSecret, setApiSecret] = useState("");
-  const [region, setRegion] = useState("us");
+  const [region, setRegion] = useState(initialCredentials?.region ?? "us");
   const [testing, setTesting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [testMessage, setTestMessage] = useState<{
@@ -86,12 +99,18 @@ export function ConnectWizard({
     }
   };
 
+  const isUpdate = !!initialCredentials;
+
   return (
     <div className="flex min-h-[400px] items-center justify-center p-6">
       <div className="w-full max-w-md rounded-lg border border-input bg-card p-6 shadow-sm">
-        <h2 className="text-lg font-semibold">Connect to Sitecore Personalize</h2>
+        <h2 className="text-lg font-semibold">
+          {isUpdate ? "Update Personalize credentials" : "Connect to Sitecore Personalize"}
+        </h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          Personalize Connect requires access to your Sitecore Personalize tenant.
+          {isUpdate
+            ? "Re-enter your API Key and Secret to update. Existing values are pre-filled where possible."
+            : "Personalize Connect requires access to your Sitecore Personalize tenant."}
         </p>
 
         <div className="mt-6 space-y-4">
@@ -152,7 +171,12 @@ export function ConnectWizard({
           </p>
         )}
 
-        <div className="mt-6 flex gap-3">
+        <div className="mt-6 flex flex-wrap gap-3">
+          {onCancel && (
+            <Button variant="ghost" onClick={onCancel}>
+              Cancel
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={handleTestConnection}
@@ -164,7 +188,7 @@ export function ConnectWizard({
             onClick={handleSave}
             disabled={saving || !apiKey.trim() || !apiSecret.trim()}
           >
-            {saving ? "Saving…" : "Save & Continue →"}
+            {saving ? "Saving…" : isUpdate ? "Update" : "Save & Continue →"}
           </Button>
         </div>
       </div>

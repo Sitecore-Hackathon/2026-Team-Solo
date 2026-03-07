@@ -25,8 +25,8 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 - **SitecoreAI**
 - **Sitecore Personalize** tenant with Full Stack Interactive Experiences
-- **Personalize API credentials** (client key, point of sale) for the Marketplace app and SDK (configured in the Marketplace app)
-- **Install SDK package in the rendering host** (npm install personalize-connect-sdk) - Follow the instructions in the [SDK README](packages/sdk/README.md)
+- **Personalize API credentials** (API Key and Secret) — configured in the Marketplace app via Settings / ConnectWizard and stored in the Sitecore content tree; no environment variables required
+- **Install SDK package in the rendering host** — Follow the [SDK README](packages/sdk/README.md)
 - **Node.js 20+** and **pnpm** for the monorepo
 - **@sitecore-marketplace-sdk/client** and **@sitecore-marketplace-sdk/xmc** (installed via `pnpm install`)
 
@@ -64,40 +64,26 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 ### Configuration
 
-**Marketplace app (environment variables):**
+**Personalize credentials** are configured in the Marketplace app, not via environment variables. Use the Connect flow (first-time setup) or the Settings page to enter your Personalize API Key, Secret, and Region. Credentials are stored securely in the Sitecore content tree at `{sitePath}/Settings/PersonalizeConnect/Credentials`.
 
-| Variable                                | Description                |
-| --------------------------------------- | -------------------------- |
-| `NEXT_PUBLIC_PERSONALIZE_CLIENT_KEY`    | Personalize API client key |
-| `NEXT_PUBLIC_PERSONALIZE_POINT_OF_SALE` | Point of sale identifier   |
-| `NEXT_PUBLIC_XMC_GRAPHQL_ENDPOINT`      | XM Cloud GraphQL endpoint  |
-
-**Rendering host (SDK):**
-
-| Variable                                | Description                |
-| --------------------------------------- | -------------------------- |
-| `NEXT_PUBLIC_PERSONALIZE_CLIENT_KEY`    | Personalize API client key |
-| `NEXT_PUBLIC_PERSONALIZE_POINT_OF_SALE` | Point of sale identifier   |
-
-Create a `.env.local` (or equivalent) in `packages/marketplace` and your rendering host with the above values.
+**Rendering host (SDK):** In XM Cloud, the SDK uses the Edge proxy — pass `sitecoreEdgeContextId` and `siteName` to `PersonalizeProvider`. No Personalize API credentials are needed in the rendering host; the Edge proxy handles calls server-side using credentials stored in Sitecore.
 
 ## Usage instructions
 
 ### 1. Open the Marketplace app in Page Builder
 
-In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists components on the current page.
+In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists components on the current page. Use the footer to access **Settings** (configure Personalize API credentials) and **Docs** (marketer-facing usage guide).
 
-![Hackathon Logo](docs/images/hackathon.png?raw=true "Hackathon Logo")
-
-_Add screenshots of the Marketplace app UI (component selector, experience picker, content mapper) to `docs/images/` and link them here._
+![Personalize Connect](docs/images/personalize-connect-logo.png "Personalize Connect")
 
 ### 2. Select a component and link an experience
 
-1. Select the component to personalize (e.g., Promo Card).
-2. Choose a Full Stack Interactive Experience from the dropdown (fetched from Personalize).
-3. Define content keys and map each to an XM Cloud datasource (e.g., `"new-visitor"` → Welcome Offer, `"returning-visitor"` → Loyalty Deal).
-4. Set the default key (used on initial load and as fallback).
-5. Save. Configuration is stored on the rendering in layout data and published with the page.
+1. **Connect credentials** (first time): Use the Connect flow to enter your Personalize API Key, Secret, and Region. Use **Settings** in the footer to view or update credentials later.
+2. Select the component to personalize (e.g., Promo Card).
+3. Choose a Full Stack Interactive Experience from the dropdown (fetched from Personalize).
+4. Define content keys and map each to an XM Cloud datasource (e.g., `"new-visitor"` → Welcome Offer, `"returning-visitor"` → Loyalty Deal).
+5. Set the default key (used on initial load and as fallback).
+6. Save. Configuration is stored in the content tree and published with the page.
 
 ### 3. Ensure your experience returns `contentKey`
 
@@ -126,14 +112,16 @@ import { PersonalizeProvider } from "personalize-connect-sdk";
 export default function RootLayout({ children }) {
   return (
     <PersonalizeProvider
-      clientKey={process.env.NEXT_PUBLIC_PERSONALIZE_CLIENT_KEY}
-      pointOfSale={process.env.NEXT_PUBLIC_PERSONALIZE_POINT_OF_SALE}
+      sitecoreEdgeContextId={process.env.SITECORE_EDGE_CONTEXT_ID}
+      siteName={process.env.SITECORE_SITE_NAME}
     >
       {children}
     </PersonalizeProvider>
   );
 }
 ```
+
+The SDK uses the XM Cloud Edge proxy for Personalize calls and datasource resolution. Personalize credentials are configured in the Marketplace app and stored in Sitecore — no API keys needed in the rendering host.
 
 ```tsx
 // components/PromoCard.tsx
@@ -149,7 +137,7 @@ const PromoCard = ({ fields }) => (
 export default withPersonalizeConnect(PromoCard);
 ```
 
-The HOC reads `personalizeConnect` config from the rendering, renders with the default datasource first, calls the experience asynchronously, and re-renders with personalized content when the response returns.
+The HOC looks up config from the content tree (loaded by the provider on mount), renders with the default datasource first, calls the experience asynchronously, and re-renders with personalized content when the response returns.
 
 ### Project structure
 
