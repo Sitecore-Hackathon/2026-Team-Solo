@@ -1,0 +1,48 @@
+{
+  "name": "personalize-connect-sdk",
+  "version": "1.0.0",
+  "description": "Runtime SDK for Personalize Connect - resolves active experience outcomes and datasources in your rendering host",
+  "keywords": [
+    "sitecore",
+    "personalize",
+    "personalization",
+    "sitecore-personalize",
+    "rendering",
+    "marketplace"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-org/2026-Team-Solo.git",
+    "directory": "packages/sdk"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts --clean",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "prepublishOnly": "npm run build"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.2.0",
+    "@types/react": "^18.0.0",
+    "react": "^18.0.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.9.2"
+  }
+}

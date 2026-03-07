@@ -1,0 +1,22 @@
+---
+description: Use Blok (Sitecore design system) for marketplace app UI
+globs: packages/marketplace/**/*
+alwaysApply: false
+---
+
+# Blok Design System
+
+The marketplace app uses [Blok](https://blok.sitecore.com/) – Sitecore's design system built on shadcn/ui.
+
+## Guidelines
+
+1. **Use only Blok/shadcn components** for UI – no raw Radix primitives or custom UI libraries.
+2. **Add components from Blok registry** when needed:
+   ```bash
+   npx shadcn@latest add https://blok.sitecore.com/r/theme.json
+   npx shadcn@latest add https://blok.sitecore.com/r/dialog.json
+   ```
+3. **Theme first**: Add `theme.json` before other Blok components for design tokens.
+4. **Import from `@/components/ui`** – components live in `packages/marketplace/src/components/ui/`.
+
+See `packages/marketplace/BLOK.md` for full setup and component list.

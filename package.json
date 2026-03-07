@@ -1,0 +1,19 @@
+{
+  "name": "personalize-connect",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "turbo run dev --filter=marketplace",
+    "build": "turbo run build",
+    "build:marketplace": "turbo run build --filter=marketplace",
+    "build:sdk": "turbo run build --filter=sdk",
+    "publish:sdk": "pnpm --filter personalize-connect-sdk publish",
+    "start": "turbo run start --filter=marketplace",
+    "lint": "turbo run lint"
+  },
+  "devDependencies": {
+    "turbo": "^2.3.3",
+    "typescript": "^5.9.2"
+  },
+  "packageManager": "pnpm@9.15.0"
+}
