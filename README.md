@@ -11,11 +11,12 @@
 
 ## Description
 
-**Personalize Connect** — A zero-code bridge between Sitecore XM Cloud components and Sitecore Personalize Full Stack Interactive Experiences.
+**Personalize Connect** — A zero-code bridge between SitecoreAI components and Sitecore Personalize Full Stack Interactive Experiences.
 
-- **Module Purpose:** Enable content editors to wire up Personalize decisioning to XM Cloud components directly from the Page Builder — no developer required. The Marketplace app lets editors select a component, link it to a Personalize Interactive Experience, map content keys to datasources, and publish. The SDK handles runtime decisioning and content swapping automatically.
-- **What problem was solved:** Connecting Personalize Full Stack experiences to XM Cloud components currently requires custom development for every implementation — developers must write API calls, map responses, and deploy for each new experience. Content editors cannot self-serve.
-- **How this module solves it:** Separates concerns cleanly: XM Cloud owns content, Personalize owns decisioning, and the Marketplace app provides point-and-click wiring. The SDK reads config from layout data, calls `POST /v2/callFlows`, resolves the returned `contentKey` to the correct datasource, fetches content via GraphQL, and re-renders the component. No per-component code or deployments for new experiences.
+- **Module Purpose:** Enable content editors to wire up Personalize decisioning to SitecoreAI components directly from the Page Builder — no developer required. The Marketplace app lets editors select a component, link it to a Personalize Interactive Experience, map content keys to datasources, and publish. The SDK handles runtime decisioning and content swapping automatically.
+- **Why not Web Experiences?** Sitecore Personalize Web Experiences can personalize content, but they inject HTML via client-side JavaScript — causing visible flicker on page load and creating content governance problems. Content lives in Personalize rather than in SitecoreAI, so editors lose the structured authoring, workflow, and publishing controls they depend on. Web Experiences also bypass the component model entirely, making it difficult to maintain brand consistency and audit what's being shown.
+- **What problem was solved:** Personalize Connect solves this by keeping content where it belongs — in SitecoreAI as structured datasources — while using the full power of Personalize Full Stack Interactive Experiences for 1:1 decisioning. The result is a cohesive flow: Personalize decides *who sees what*, SitecoreAI owns *the content they see*, and the Marketplace app wires them together with zero code. No flicker, no governance gaps, no content sprawl across systems.
+- **How this module solves it:** Separates concerns cleanly: SitecoreAI owns content, Personalize owns decisioning, and the Marketplace app provides point-and-click wiring. The SDK reads config from the content tree, calls `POST /v2/callFlows` via the Edge proxy, resolves the returned `contentKey` to the correct datasource, fetches content via GraphQL, and re-renders the component. No per-component code or deployments for new experiences.
 
 For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_CONNECT.md](docs/PERSONALIZE_CONNECT.md).
 
@@ -47,7 +48,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
    pnpm run build
    ```
 
-3. **SDK:** Add to your XM Cloud rendering host (Next.js JSS or Content SDK app):
+3. **SDK:** Add to your SitecoreAI rendering host (Next.js JSS or Content SDK app):
 
    ```bash
    pnpm add personalize-connect-sdk
@@ -65,13 +66,13 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 **Personalize credentials** are configured in the Marketplace app, not via environment variables. Use the Connect flow (first-time setup) or the Settings page to enter your Personalize API Key, Secret, and Region. Credentials are stored securely in the Sitecore content tree at `{sitePath}/Settings/PersonalizeConnect/Credentials`.
 
-**Rendering host (SDK):** In XM Cloud, the SDK uses the Edge proxy — pass `sitecoreEdgeContextId` and `siteName` to `PersonalizeProvider`. No Personalize API credentials are needed in the rendering host; the Edge proxy handles calls server-side using credentials stored in Sitecore.
+**Rendering host (SDK):** In SitecoreAI, the SDK uses the Edge proxy — pass `sitecoreEdgeContextId` and `siteName` to `PersonalizeProvider`. No Personalize API credentials are needed in the rendering host; the Edge proxy handles calls server-side using credentials stored in Sitecore.
 
 ## Usage instructions
 
 ### 1. Open the Marketplace app in Page Builder
 
-In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists components on the current page. Use the footer to access **Settings** (configure Personalize API credentials) and **Docs** (marketer-facing usage guide).
+In SitecoreAI Pages, open the Personalize Connect app from the sidebar. It lists components on the current page. Use the footer to access **Settings** (configure Personalize API credentials) and **Docs** (marketer-facing usage guide).
 
 <img src="docs/images/personalize-connect-ui.png" alt="Personalize Connect configuration panel" width="50%" />
 
@@ -80,31 +81,55 @@ In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists c
 1. **Connect credentials** (first time): Use the Connect flow to enter your Personalize API Key, Secret, and Region. Use **Settings** in the footer to view or update credentials later.
 2. Select the component to personalize (e.g., Promo Card).
 3. Choose a Full Stack Interactive Experience from the dropdown (fetched from Personalize).
-4. Define content keys and map each to an XM Cloud datasource (e.g., `"new-visitor"` → Welcome Offer, `"returning-visitor"` → Loyalty Deal).
+4. Define content keys and map each to an SitecoreAI datasource (e.g., `"new-visitor"` → Welcome Offer, `"returning-visitor"` → Loyalty Deal).
 5. Set the default key (used on initial load and as fallback).
 6. Save. Configuration is stored in the content tree and published with the page.
 
-### 3. Personalize Interactive Experience setup
+### 3. Configure a Personalize Interactive Experience
 
-_Coming soon._ A walkthrough of how to configure a Full Stack Interactive Experience in Sitecore Personalize (e.g., create the experience, define variants, and return `contentKey`).
-
-### 4. Ensure your experience returns `contentKey`
-
-Your Personalize Interactive Experience must return JSON in this format:
+Create a **Full Stack Interactive Experience** in Sitecore Personalize with a **single variant** that outputs the content keys you defined in the Marketplace app. The experience must return JSON in this shape:
 
 ```json
 { "contentKey": "<string>" }
 ```
 
-Example FreeMarker:
+**How you decide which content key to return is entirely up to you.** Use a Decision Model, a Decision Table, audience conditions, programmable logic — anything Personalize supports. The SDK doesn't care how the decision is made, only that the response contains a `contentKey` matching one of your mapped keys.
+
+#### Decision Table example
+
+A simple approach is a Decision Table that maps guest attributes to content keys. For example, a table named "Content Key Resolver" that checks session count:
+
+<img src="docs/images/decision-table.png" alt="Decision Table — Content Key Resolver mapping session count to content keys" width="100%" />
+
+This table returns `"returning-visitor"` when the guest has more than 1 session, and `"new-visitor"` otherwise.
+
+#### Experience API response template
+
+In the experience variant's **API Response** tab, use FreeMarker to read the Decision Model output and return the content key:
 
 ```freemarker
-<#if guest.sessions?size gt 3>
-{ "contentKey": "returning-visitor" }
+<#if (decisionModelResults)?? && (decisionModelResults.decisionModelResultNodes)??>
+<#list decisionModelResults.decisionModelResultNodes as result>
+<#if result.type == "decisionTable" && (result.outputs)?? && (result.outputs?size > 0)>
+{
+  "contentKey": "${result.outputs[0].content_key}"
+}
+</#if>
+</#list>
 <#else>
-{ "contentKey": "new-visitor" }
+{
+  "contentKey": "default"
+}
 </#if>
 ```
+
+With the Decision Table above, this returns `{ "contentKey": "returning-visitor" }`, `{ "contentKey": "new-visitor" }`, or falls back to `{ "contentKey": "default" }` if the Decision Model has no results.
+
+#### Custom data in responses
+
+> **Coming soon.** Currently the SDK only reads `contentKey` from the experience response. Support for returning custom data alongside the content key (e.g., rendering parameters, promotional metadata) is planned for a future release.
+
+For more details on the architecture and API contract, see [docs/PERSONALIZE_CONNECT.md](docs/PERSONALIZE_CONNECT.md).
 
 ### 5. Integrate the SDK in your rendering host
 
@@ -124,7 +149,7 @@ export default function RootLayout({ children }) {
 }
 ```
 
-The SDK uses the XM Cloud Edge proxy for Personalize calls and datasource resolution. Personalize credentials are configured in the Marketplace app and stored in Sitecore — no API keys needed in the rendering host.
+The SDK uses the SitecoreAI Edge proxy for Personalize calls and datasource resolution. Personalize credentials are configured in the Marketplace app and stored in Sitecore — no API keys needed in the rendering host.
 
 ```tsx
 // components/PromoCard.tsx

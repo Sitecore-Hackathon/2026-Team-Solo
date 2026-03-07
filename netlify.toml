@@ -1,10 +1,10 @@
-# Netlify config for Personalize Connect marketplace app
-# Base: repo root (required for npm workspaces) | Package: marketplace
-
 [build]
-  base = "."
-  command = "pnpm turbo run build --filter=marketplace"
-  publish = "packages/marketplace/.next"
+  base = "packages/marketplace"
+  command = "pnpm run build"
+  publish = ".next"
 
 [build.environment]
   NODE_VERSION = "20"
+
+[[plugins]]
+  package = "@netlify/plugin-nextjs"

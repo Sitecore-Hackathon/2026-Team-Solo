@@ -1,6 +1,6 @@
 # Personalize Connect — Technical Design
 
-**A zero-code bridge between Sitecore XM Cloud components and Sitecore Personalize Full Stack Interactive Experiences.**
+**A zero-code bridge between SitecoreAI components and Sitecore Personalize Full Stack Interactive Experiences.**
 
 This document describes the architecture, API contract, and SDK design. For installation and usage, see the main [README](../README.md).
 
@@ -24,7 +24,7 @@ This document describes the architecture, API contract, and SDK design. For inst
 
 ## The Problem
 
-Connecting Sitecore Personalize Full Stack Interactive Experiences to XM Cloud components currently requires custom development for every implementation. A developer must:
+Connecting Sitecore Personalize Full Stack Interactive Experiences to SitecoreAI components currently requires custom development for every implementation. A developer must:
 
 1. Write code to call the Personalize API (`POST /v2/callFlows`)
 2. Handle the response and map it to component content
@@ -37,7 +37,7 @@ Content editors and marketers cannot self-serve. Every personalization rule that
 
 | Concern | Owner | Tool |
 |---------|-------|------|
-| **What content to show** | Content Editor | XM Cloud (datasources) |
+| **What content to show** | Content Editor | SitecoreAI (datasources) |
 | **Who sees what** | Personalize | Interactive Experience (decisioning logic) |
 | **Wiring them together** | Content Editor | Marketplace App (point-and-click config) |
 
@@ -179,7 +179,7 @@ packages/
 ├── sdk/                  # npm publishable runtime SDK
 │   ├── PersonalizeProvider, withPersonalizeConnect, usePersonalizeExperience
 │   └── personalizeClient, contentResolver, types
-└── marketplace/          # XM Cloud Pages sidebar plugin (Next.js)
+└── marketplace/          # SitecoreAI Pages sidebar plugin (Next.js)
     └── ComponentSelector, ExperiencePicker, OutcomeMapper, etc.
 ```
 

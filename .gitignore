@@ -63,3 +63,5 @@ _ReSharper*/
 .vs/
 # NuGet packages folder (not to be confused with packages/ monorepo)
 *.nupkg
+# Local Netlify folder
+.netlify

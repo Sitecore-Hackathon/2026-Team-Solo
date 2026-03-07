@@ -130,23 +130,6 @@ function PreviewBar({
   );
 }
 
-/* ── Marketplace-app detection via cross-frame message ── */
-
-let _marketplaceDetected = false;
-const MARKETPLACE_MSG_TYPE = "personalize-connect-active";
-
-if (typeof window !== "undefined") {
-  window.addEventListener("message", (e) => {
-    try {
-      const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-      if (data?.type === MARKETPLACE_MSG_TYPE) {
-        _marketplaceDetected = true;
-      }
-    } catch {
-      // not our message
-    }
-  });
-}
 
 /**
  * HOC that wraps any JSS component.
@@ -171,7 +154,6 @@ export function withPersonalizeConnect<P extends object>(
     const [previewKey, setPreviewKey] = useState<string | null>(null);
     const [previewFields, setPreviewFields] = useState<ComponentFields | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
-    const [showBar, setShowBar] = useState(_marketplaceDetected);
     const mountedRef = useRef(true);
     const previewCacheRef = useRef<Map<string, ComponentFields>>(new Map());
 
@@ -208,25 +190,6 @@ export function withPersonalizeConnect<P extends object>(
     }
 
     const isEditing = context?.isEditing ?? false;
-
-    useEffect(() => {
-      if (!isEditing || !config) return;
-      if (_marketplaceDetected) {
-        setShowBar(true);
-        return;
-      }
-      const handler = (e: MessageEvent) => {
-        try {
-          const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
-          if (data?.type === MARKETPLACE_MSG_TYPE) {
-            _marketplaceDetected = true;
-            setShowBar(true);
-          }
-        } catch { /* ignore */ }
-      };
-      window.addEventListener("message", handler);
-      return () => window.removeEventListener("message", handler);
-    }, [isEditing, config]);
 
     const handlePreviewSelect = useCallback(async (key: string | null) => {
       if (!config || !context) return;
@@ -322,14 +285,12 @@ export function withPersonalizeConnect<P extends object>(
       return (
         <Fragment>
           <WrappedComponent {...editingProps} />
-          {showBar && (
-            <PreviewBar
-              config={config}
-              activeKey={previewKey}
-              isLoading={previewLoading}
-              onSelect={handlePreviewSelect}
-            />
-          )}
+          <PreviewBar
+            config={config}
+            activeKey={previewKey}
+            isLoading={previewLoading}
+            onSelect={handlePreviewSelect}
+          />
         </Fragment>
       );
     }

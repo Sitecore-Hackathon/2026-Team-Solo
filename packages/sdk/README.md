@@ -1,6 +1,6 @@
 # Personalize Connect SDK
 
-Runtime SDK for [Personalize Connect](https://github.com/Sitecore-Hackathon/2026-Team-Solo) — a zero-code bridge between Sitecore XM Cloud components and Sitecore Personalize Full Stack Interactive Experiences.
+Runtime SDK for [Personalize Connect](https://github.com/Sitecore-Hackathon/2026-Team-Solo) — a zero-code bridge between SitecoreAI components and Sitecore Personalize Full Stack Interactive Experiences.
 
 The SDK reads configuration authored by the Marketplace app (stored in the content tree), calls Personalize for a decision via the Edge proxy, resolves the matching datasource from Experience Edge, and swaps component content — with zero per-component code. In Page Builder, components with personalization get a visual indicator.
 
@@ -12,7 +12,7 @@ npm install personalize-connect-sdk
 
 Peer dependency: `react` >= 18.
 
-## Quick Start (XM Cloud)
+## Quick Start (SitecoreAI)
 
 ### 1. Wrap your app with `PersonalizeProvider`
 
@@ -81,12 +81,12 @@ function MyComponent({ rendering }) {
 
 ## Provider Props
 
-### XM Cloud (recommended)
+### SitecoreAI (recommended)
 
 | Prop | Required | Description |
 |------|----------|-------------|
 | `sitecoreEdgeContextId` | Yes | Edge Context ID — drives all Edge proxy calls |
-| `siteName` | Yes | XM Cloud site name |
+| `siteName` | Yes | SitecoreAI site name |
 | `sitecoreEdgeUrl` | No | Edge platform URL (defaults to `https://edge-platform.sitecorecloud.io`) |
 
 ### Legacy (direct credentials)
