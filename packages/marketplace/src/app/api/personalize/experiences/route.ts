@@ -5,6 +5,16 @@ import {
   getPersonalizeApiBase,
 } from "@/lib/personalizeAuth";
 
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Allow-Headers": "Content-Type",
+};
+
+export async function OPTIONS() {
+  return new NextResponse(null, { status: 204, headers: CORS_HEADERS });
+}
+
 export async function POST(req: NextRequest) {
   let body: { apiKey?: string; apiSecret?: string; region?: string };
   try {
@@ -31,7 +41,7 @@ export async function POST(req: NextRequest) {
     const token = await exchangeForToken(apiKey, apiSecret);
     const apiBase = getPersonalizeApiBase(region);
     const flows = await listFlows(apiBase, token);
-    return NextResponse.json(flows);
+    return NextResponse.json(flows, { headers: CORS_HEADERS });
   } catch (e) {
     console.error("Personalize experiences fetch error:", e);
     return NextResponse.json(
