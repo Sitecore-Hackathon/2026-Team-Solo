@@ -1,3 +1,5 @@
+<img src="docs/images/personalize-connect-logo.png" alt="Personalize Connect" width="200" />
+
 ## Team name
 
 ⟹ Team Solo
@@ -74,7 +76,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists components on the current page. Use the footer to access **Settings** (configure Personalize API credentials) and **Docs** (marketer-facing usage guide).
 
-![Personalize Connect](docs/images/personalize-connect-logo.png "Personalize Connect")
+<img src="docs/images/personalize-connect-ui.png" alt="Personalize Connect configuration panel" width="50%" />
 
 ### 2. Select a component and link an experience
 
@@ -85,7 +87,11 @@ In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists c
 5. Set the default key (used on initial load and as fallback).
 6. Save. Configuration is stored in the content tree and published with the page.
 
-### 3. Ensure your experience returns `contentKey`
+### 3. Personalize Interactive Experience setup
+
+*Coming soon.* A walkthrough of how to configure a Full Stack Interactive Experience in Sitecore Personalize (e.g., create the experience, define variants, and return `contentKey`).
+
+### 4. Ensure your experience returns `contentKey`
 
 Your Personalize Interactive Experience must return JSON in this format:
 
@@ -103,7 +109,7 @@ Example FreeMarker:
 </#if>
 ```
 
-### 4. Integrate the SDK in your rendering host
+### 5. Integrate the SDK in your rendering host
 
 ```tsx
 // app/layout.tsx or _app.tsx
