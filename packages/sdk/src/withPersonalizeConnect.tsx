@@ -1,7 +1,7 @@
 "use client";
 
 import type { ComponentType, CSSProperties } from "react";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { Fragment, useCallback, useEffect, useRef, useState } from "react";
 import { callPersonalize } from "./personalizeClient";
 import { resolveContent } from "./contentResolver";
 import { usePersonalizeContext } from "./PersonalizeProvider";
@@ -23,42 +23,112 @@ function getRenderingUid(props: Record<string, unknown>): string | undefined {
   return rendering?.uid;
 }
 
-const INDICATOR_BORDER: CSSProperties = {
-  position: "relative",
-  border: "2px dashed #6B5CE7",
-  borderRadius: "4px",
+const BAR_STYLE: CSSProperties = {
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  padding: "6px 12px",
+  background: "linear-gradient(135deg, #6B5CE7 0%, #8B7CF7 100%)",
+  color: "#fff",
+  fontSize: "12px",
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  fontWeight: 500,
+  borderRadius: "6px 6px 0 0",
+  zIndex: 9999,
+  flexWrap: "wrap",
 };
 
-const INDICATOR_BADGE: CSSProperties = {
-  position: "absolute",
-  top: "-10px",
-  right: "-10px",
-  zIndex: 9999,
+const LABEL_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
   gap: "4px",
-  padding: "2px 8px",
+  marginRight: "6px",
+  fontSize: "11px",
+  opacity: 0.85,
+  whiteSpace: "nowrap",
+};
+
+const TAB_BASE: CSSProperties = {
+  padding: "3px 10px",
   fontSize: "11px",
   fontWeight: 600,
-  lineHeight: "16px",
-  color: "#fff",
-  backgroundColor: "#6B5CE7",
-  borderRadius: "10px",
+  border: "1px solid rgba(255,255,255,0.4)",
+  borderRadius: "12px",
+  cursor: "pointer",
+  transition: "all 0.15s ease",
   whiteSpace: "nowrap",
-  pointerEvents: "none",
+  lineHeight: "16px",
 };
+
+const TAB_ACTIVE: CSSProperties = {
+  ...TAB_BASE,
+  background: "#fff",
+  color: "#6B5CE7",
+  border: "1px solid #fff",
+};
+
+const TAB_INACTIVE: CSSProperties = {
+  ...TAB_BASE,
+  background: "rgba(255,255,255,0.15)",
+  color: "#fff",
+};
+
+const LOADING_STYLE: CSSProperties = {
+  marginLeft: "auto",
+  fontSize: "10px",
+  opacity: 0.7,
+};
+
+function PreviewBar({
+  config,
+  activeKey,
+  isLoading,
+  onSelect,
+}: {
+  config: PersonalizeConnectConfig;
+  activeKey: string | null;
+  isLoading: boolean;
+  onSelect: (key: string | null) => void;
+}) {
+  const keys = Object.keys(config.contentMap);
+
+  return (
+    <div style={BAR_STYLE} data-personalize-connect-bar={config.friendlyId}>
+      <span style={LABEL_STYLE}>
+        ⚡ {config.friendlyId}
+      </span>
+      <button
+        type="button"
+        style={activeKey === null ? TAB_ACTIVE : TAB_INACTIVE}
+        onClick={() => onSelect(null)}
+      >
+        Original
+      </button>
+      {keys.map((key) => (
+        <button
+          key={key}
+          type="button"
+          style={activeKey === key ? TAB_ACTIVE : TAB_INACTIVE}
+          onClick={() => onSelect(key)}
+        >
+          {key}
+        </button>
+      ))}
+      {isLoading && <span style={LOADING_STYLE}>loading...</span>}
+    </div>
+  );
+}
 
 /**
  * HOC that wraps any JSS component.
- * Looks for config in this order:
+ *
+ * Config lookup order:
  *   1. props.rendering.personalizeConnect (inline on layout data)
  *   2. context.configs map (loaded from content tree via Edge)
  *
- * If config is found, renders with defaultKey first, calls Personalize
- * asynchronously, and re-renders with personalized content.
- *
- * In Page Builder, renders a visual indicator (border + badge) on
- * components that have personalization configured.
+ * Live site: renders with defaultKey first, calls Personalize async, re-renders.
+ * Page Builder: shows a preview bar above the component to switch between
+ * content variants without running actual personalization.
  */
 export function withPersonalizeConnect<P extends object>(
   WrappedComponent: ComponentType<P>,
@@ -69,12 +139,14 @@ export function withPersonalizeConnect<P extends object>(
   function PersonalizeConnectWrapper(props: P) {
     const context = usePersonalizeContext();
     const [resolvedFields, setResolvedFields] = useState<ComponentFields | null>(null);
+    const [previewKey, setPreviewKey] = useState<string | null>(null);
+    const [previewFields, setPreviewFields] = useState<ComponentFields | null>(null);
+    const [previewLoading, setPreviewLoading] = useState(false);
     const mountedRef = useRef(true);
+    const previewCacheRef = useRef<Map<string, ComponentFields>>(new Map());
 
-    // 1. Try inline config from props
     let config = getConfig(props);
 
-    // 2. Fall back to configs loaded from Edge (keyed by rendering uid)
     if (!config && context) {
       const uid = getRenderingUid(props as unknown as Record<string, unknown>);
       if (uid) {
@@ -105,8 +177,51 @@ export function withPersonalizeConnect<P extends object>(
       log(`[${componentName}] Config active:`, { friendlyId: config.friendlyId, defaultKey: config.defaultKey, keys: Object.keys(config.contentMap) });
     }
 
-    const runPersonalization = useCallback(async () => {
+    const isEditing = context?.isEditing ?? false;
+
+    const handlePreviewSelect = useCallback(async (key: string | null) => {
       if (!config || !context) return;
+
+      setPreviewKey(key);
+
+      if (key === null) {
+        setPreviewFields(null);
+        return;
+      }
+
+      const cached = previewCacheRef.current.get(key);
+      if (cached) {
+        setPreviewFields(cached);
+        return;
+      }
+
+      const datasourceId = config.contentMap[key];
+      if (!datasourceId) {
+        warn(`[${componentName}] Preview: no datasource for key "${key}"`);
+        setPreviewFields(null);
+        return;
+      }
+
+      setPreviewLoading(true);
+      log(`[${componentName}] Preview: resolving datasource for key "${key}" →`, datasourceId);
+
+      try {
+        const fields = await context.resolveDatasource(datasourceId);
+        if (mountedRef.current) {
+          previewCacheRef.current.set(key, fields);
+          setPreviewFields(fields);
+          log(`[${componentName}] Preview: resolved fields for "${key}":`, Object.keys(fields));
+        }
+      } catch (e) {
+        warn(`[${componentName}] Preview: failed to resolve datasource for "${key}"`, e);
+        if (mountedRef.current) setPreviewFields(null);
+      } finally {
+        if (mountedRef.current) setPreviewLoading(false);
+      }
+    }, [config, context]);
+
+    const runPersonalization = useCallback(async () => {
+      if (!config || !context || isEditing) return;
 
       group(`[${componentName}] personalization flow`);
       log("Calling Personalize for experience:", config.friendlyId);
@@ -132,41 +247,46 @@ export function withPersonalizeConnect<P extends object>(
         warn(`[${componentName}] Content resolution returned null — component keeps original fields`);
       }
       groupEnd();
-    }, [config, context]);
+    }, [config, context, isEditing]);
 
     useEffect(() => {
       mountedRef.current = true;
-      if (config && context && context.browserId) {
+      if (config && context && context.browserId && !isEditing) {
         runPersonalization();
       }
       return () => {
         mountedRef.current = false;
       };
-    }, [config?.friendlyId, context?.browserId, context?.configsLoaded, runPersonalization]);
+    }, [config?.friendlyId, context?.browserId, context?.configsLoaded, isEditing, runPersonalization]);
 
     if (!config || !context) {
       return <WrappedComponent {...props} />;
+    }
+
+    if (isEditing) {
+      const editingFields = previewKey !== null ? previewFields : null;
+      const editingProps = editingFields
+        ? ({ ...props, fields: editingFields } as P)
+        : props;
+
+      return (
+        <Fragment>
+          <PreviewBar
+            config={config}
+            activeKey={previewKey}
+            isLoading={previewLoading}
+            onSelect={handlePreviewSelect}
+          />
+          <WrappedComponent {...editingProps} />
+        </Fragment>
+      );
     }
 
     const mergedProps = resolvedFields
       ? ({ ...props, fields: resolvedFields } as P)
       : props;
 
-    const component = <WrappedComponent {...mergedProps} />;
-
-    if (context.isEditing) {
-      log(`[${componentName}] Editing mode — rendering indicator badge for ${config.friendlyId}`);
-      return (
-        <div style={INDICATOR_BORDER} data-personalize-connect={config.friendlyId}>
-          <span style={INDICATOR_BADGE} title={`Personalize: ${config.friendlyId}`}>
-            ⚡ Personalized
-          </span>
-          {component}
-        </div>
-      );
-    }
-
-    return component;
+    return <WrappedComponent {...mergedProps} />;
   }
 
   PersonalizeConnectWrapper.displayName = `WithPersonalizeConnect(${componentName})`;
