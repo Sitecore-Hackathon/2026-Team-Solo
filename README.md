@@ -62,7 +62,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 4. Wrap your app with `PersonalizeProvider` and components with `withPersonalizeConnect` (see Usage).
 
-For hackathon judges and beta testers: steps to install the app in your org are in [docs/beta-access.md](docs/beta-access.md).
+Want to try it in your own org? The repo is public — create your own custom app in App Studio and run it locally. See [docs/beta-access.md](docs/beta-access.md) for step-by-step instructions.
 
 ### Configuration
 
