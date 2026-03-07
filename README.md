@@ -62,6 +62,8 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 4. Wrap your app with `PersonalizeProvider` and components with `withPersonalizeConnect` (see Usage).
 
+To provide the app to other organizations, see [docs/PROVIDING_APP_TO_ORGS.md](docs/PROVIDING_APP_TO_ORGS.md).
+
 ### Configuration
 
 **Personalize credentials** are configured in the Marketplace app, not via environment variables. Use the Connect flow (first-time setup) or the Settings page to enter your Personalize API Key, Secret, and Region. Credentials are stored securely in the Sitecore content tree at `{sitePath}/Settings/PersonalizeConnect/Credentials`.
@@ -95,17 +97,26 @@ Create a **Full Stack Interactive Experience** in Sitecore Personalize with a **
 
 **How you decide which content key to return is entirely up to you.** Use a Decision Model, a Decision Table, audience conditions, programmable logic — anything Personalize supports. The SDK doesn't care how the decision is made, only that the response contains a `contentKey` matching one of your mapped keys.
 
-#### Decision Table example
+#### Creating the content key in Personalize
 
-A simple approach is a Decision Table that maps guest attributes to content keys. For example, a table named "Content Key Resolver" that checks session count:
+The experience must return a JSON object with a `contentKey` property. How you produce that value is flexible — Decision Model, Decision Table, conditions, or programmable logic. The important part is that the output key name is `content_key` (snake_case) in the Decision Model, which maps to `contentKey` (camelCase) in the API response.
+
+**Decision Table example**
+
+1. Add a **Decision Model** to your experience.
+2. Add a **Decision Table** (e.g., "Content Key Resolver") with:
+   - **Input column:** a condition (e.g., `session count` with key `session_count`)
+   - **Output column:** a string output with key `content_key`
+3. Add rules that map inputs to output values, e.g.:
+   - `session_count > 1` → `"returning-visitor"`
+   - (default/catch-all) → `"new-visitor"`
+4. Use **Predefined Values** on the output to ensure you return exact strings that match the content keys you defined in the Marketplace app.
 
 <img src="docs/images/decision-table.png" alt="Decision Table — Content Key Resolver mapping session count to content keys" width="100%" />
 
-This table returns `"returning-visitor"` when the guest has more than 1 session, and `"new-visitor"` otherwise.
-
 #### Experience API response template
 
-In the experience variant's **API Response** tab, use FreeMarker to read the Decision Model output and return the content key:
+In the experience variant's **API Response** tab, use FreeMarker to read the Decision Model output. The template below reads the first Decision Table's output — the `content_key` field you defined in the table — and returns it as `contentKey`:
 
 ```freemarker
 <#if (decisionModelResults)?? && (decisionModelResults.decisionModelResultNodes)??>
