@@ -53,6 +53,20 @@ export function MarketplaceProvider({ children }: { children: ReactNode }) {
             if (!cancelled) setPagesContext(res as PagesContext);
           },
         });
+
+        try {
+          const frames = window.parent?.frames;
+          if (frames) {
+            for (let i = 0; i < frames.length; i++) {
+              try {
+                frames[i].postMessage(
+                  { type: "personalize-connect-active" },
+                  "*"
+                );
+              } catch { /* cross-origin — expected for some frames */ }
+            }
+          }
+        } catch { /* cross-origin parent access */ }
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : String(err));

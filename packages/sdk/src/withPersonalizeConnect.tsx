@@ -23,6 +23,8 @@ function getRenderingUid(props: Record<string, unknown>): string | undefined {
   return rendering?.uid;
 }
 
+/* ── Preview bar styles ── */
+
 const BAR_STYLE: CSSProperties = {
   display: "flex",
   alignItems: "center",
@@ -33,9 +35,10 @@ const BAR_STYLE: CSSProperties = {
   fontSize: "12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   fontWeight: 500,
-  borderRadius: "6px 6px 0 0",
-  zIndex: 9999,
+  borderRadius: "0 0 6px 6px",
   flexWrap: "wrap",
+  position: "relative",
+  zIndex: 1,
 };
 
 const LABEL_STYLE: CSSProperties = {
@@ -79,6 +82,13 @@ const LOADING_STYLE: CSSProperties = {
   opacity: 0.7,
 };
 
+const PREVIEW_LABEL: CSSProperties = {
+  marginLeft: "auto",
+  fontSize: "10px",
+  opacity: 0.6,
+  fontStyle: "italic",
+};
+
 function PreviewBar({
   config,
   activeKey,
@@ -94,9 +104,7 @@ function PreviewBar({
 
   return (
     <div style={BAR_STYLE} data-personalize-connect-bar={config.friendlyId}>
-      <span style={LABEL_STYLE}>
-        ⚡ {config.friendlyId}
-      </span>
+      <span style={LABEL_STYLE}>⚡ {config.friendlyId}</span>
       <button
         type="button"
         style={activeKey === null ? TAB_ACTIVE : TAB_INACTIVE}
@@ -114,9 +122,30 @@ function PreviewBar({
           {key}
         </button>
       ))}
-      {isLoading && <span style={LOADING_STYLE}>loading...</span>}
+      {isLoading && <span style={LOADING_STYLE}>loading…</span>}
+      {activeKey !== null && !isLoading && (
+        <span style={PREVIEW_LABEL}>preview only — switch to Original to edit</span>
+      )}
     </div>
   );
+}
+
+/* ── Marketplace-app detection via cross-frame message ── */
+
+let _marketplaceDetected = false;
+const MARKETPLACE_MSG_TYPE = "personalize-connect-active";
+
+if (typeof window !== "undefined") {
+  window.addEventListener("message", (e) => {
+    try {
+      const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+      if (data?.type === MARKETPLACE_MSG_TYPE) {
+        _marketplaceDetected = true;
+      }
+    } catch {
+      // not our message
+    }
+  });
 }
 
 /**
@@ -126,9 +155,9 @@ function PreviewBar({
  *   1. props.rendering.personalizeConnect (inline on layout data)
  *   2. context.configs map (loaded from content tree via Edge)
  *
- * Live site: renders with defaultKey first, calls Personalize async, re-renders.
- * Page Builder: shows a preview bar above the component to switch between
- * content variants without running actual personalization.
+ * Live site: calls Personalize, resolves winning variant, swaps fields.
+ * Page Builder: shows a preview bar BELOW the component to switch between
+ * content variants. "Original" keeps fields fully editable.
  */
 export function withPersonalizeConnect<P extends object>(
   WrappedComponent: ComponentType<P>,
@@ -142,6 +171,7 @@ export function withPersonalizeConnect<P extends object>(
     const [previewKey, setPreviewKey] = useState<string | null>(null);
     const [previewFields, setPreviewFields] = useState<ComponentFields | null>(null);
     const [previewLoading, setPreviewLoading] = useState(false);
+    const [showBar, setShowBar] = useState(_marketplaceDetected);
     const mountedRef = useRef(true);
     const previewCacheRef = useRef<Map<string, ComponentFields>>(new Map());
 
@@ -178,6 +208,25 @@ export function withPersonalizeConnect<P extends object>(
     }
 
     const isEditing = context?.isEditing ?? false;
+
+    useEffect(() => {
+      if (!isEditing || !config) return;
+      if (_marketplaceDetected) {
+        setShowBar(true);
+        return;
+      }
+      const handler = (e: MessageEvent) => {
+        try {
+          const data = typeof e.data === "string" ? JSON.parse(e.data) : e.data;
+          if (data?.type === MARKETPLACE_MSG_TYPE) {
+            _marketplaceDetected = true;
+            setShowBar(true);
+          }
+        } catch { /* ignore */ }
+      };
+      window.addEventListener("message", handler);
+      return () => window.removeEventListener("message", handler);
+    }, [isEditing, config]);
 
     const handlePreviewSelect = useCallback(async (key: string | null) => {
       if (!config || !context) return;
@@ -263,25 +312,29 @@ export function withPersonalizeConnect<P extends object>(
       return <WrappedComponent {...props} />;
     }
 
+    /* ── Editing mode: component first (editable), optional preview bar below ── */
     if (isEditing) {
-      const editingFields = previewKey !== null ? previewFields : null;
-      const editingProps = editingFields
-        ? ({ ...props, fields: editingFields } as P)
+      const isPreviewing = previewKey !== null && previewFields !== null;
+      const editingProps = isPreviewing
+        ? ({ ...props, fields: previewFields } as P)
         : props;
 
       return (
         <Fragment>
-          <PreviewBar
-            config={config}
-            activeKey={previewKey}
-            isLoading={previewLoading}
-            onSelect={handlePreviewSelect}
-          />
           <WrappedComponent {...editingProps} />
+          {showBar && (
+            <PreviewBar
+              config={config}
+              activeKey={previewKey}
+              isLoading={previewLoading}
+              onSelect={handlePreviewSelect}
+            />
+          )}
         </Fragment>
       );
     }
 
+    /* ── Live site: personalized fields ── */
     const mergedProps = resolvedFields
       ? ({ ...props, fields: resolvedFields } as P)
       : props;
