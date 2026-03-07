@@ -33,6 +33,17 @@ interface EdgeItemResponse {
   errors?: Array<{ message?: string }>;
 }
 
+/**
+ * Formats a compact GUID (32 hex chars, no hyphens) into standard format.
+ * e.g. "a2c7b6e142154c839cc20779f9bf80e5" → "{a2c7b6e1-4215-4c83-9cc2-0779f9bf80e5}"
+ * Already-formatted GUIDs are returned as-is.
+ */
+function formatGuidForEdge(id: string): string {
+  const clean = id.replace(/[{}\-\s]/g, "").toLowerCase();
+  if (clean.length !== 32 || !/^[0-9a-f]+$/.test(clean)) return id;
+  return `{${clean.slice(0, 8)}-${clean.slice(8, 12)}-${clean.slice(12, 16)}-${clean.slice(16, 20)}-${clean.slice(20)}}`;
+}
+
 function mapFields(fields: EdgeField[]): ComponentFields {
   const result: ComponentFields = {};
   for (const field of fields) {
@@ -49,14 +60,15 @@ async function queryEdge(
   datasourceId: string,
   language: string
 ): Promise<ComponentFields> {
-  log("Edge GraphQL request:", { url, datasourceId, language });
+  const formattedId = formatGuidForEdge(datasourceId);
+  log("Edge GraphQL request:", { url, datasourceId, formattedId, language });
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...headers },
     body: JSON.stringify({
       query: ITEM_QUERY,
-      variables: { itemId: datasourceId, language },
+      variables: { itemId: formattedId, language },
     }),
   });
 

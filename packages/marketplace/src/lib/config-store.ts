@@ -12,6 +12,7 @@ export interface PersonalizeConnectConfigCore {
 export interface PersonalizeConnectConfig extends PersonalizeConnectConfigCore {
   componentName: string;
   renderingId: string;
+  instanceId?: string;
   experienceId: string;
   updatedAt: string;
 }

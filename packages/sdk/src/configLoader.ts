@@ -89,7 +89,12 @@ function extractFieldValue(fields: ConfigField[] | undefined, fieldName: string)
   return undefined;
 }
 
-function parseConfigJson(json: string, renderingId: string): PersonalizeConnectConfig | null {
+interface ParsedConfig {
+  config: PersonalizeConnectConfig;
+  instanceId?: string;
+}
+
+function parseConfigJson(json: string, renderingId: string): ParsedConfig | null {
   try {
     const raw = JSON.parse(json) as Record<string, unknown>;
     const contentMap = (raw.contentMap ?? raw.variantMap) as Record<string, string> | undefined;
@@ -97,9 +102,12 @@ function parseConfigJson(json: string, renderingId: string): PersonalizeConnectC
     if (!contentMap || typeof contentMap !== "object" || !friendlyId) return null;
     const keys = Object.keys(contentMap);
     return {
-      friendlyId,
-      contentMap,
-      defaultKey: (raw.defaultKey as string) ?? keys[0] ?? "",
+      config: {
+        friendlyId,
+        contentMap,
+        defaultKey: (raw.defaultKey as string) ?? keys[0] ?? "",
+      },
+      instanceId: (raw.instanceId as string) ?? undefined,
     };
   } catch {
     warn("Failed to parse config JSON for rendering", renderingId);
@@ -207,8 +215,14 @@ export async function loadPageConfigs(
       const normalizedRid = normalizeGuid(renderingId);
       const parsed = parseConfigJson(configJson, normalizedRid);
       if (parsed) {
-        configs.set(normalizedRid, parsed);
-        log("Config loader: loaded config for rendering", normalizedRid, "→ experience", parsed.friendlyId);
+        configs.set(normalizedRid, parsed.config);
+        log("Config loader: stored under renderingId", normalizedRid, "→", parsed.config.friendlyId);
+
+        if (parsed.instanceId) {
+          const normalizedIid = normalizeGuid(parsed.instanceId);
+          configs.set(normalizedIid, parsed.config);
+          log("Config loader: also stored under instanceId", normalizedIid);
+        }
       }
     }
 

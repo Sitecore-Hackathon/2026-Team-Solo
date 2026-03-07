@@ -191,6 +191,7 @@ export function useComponentConfig({
     const config: PersonalizeConnectConfig = {
       componentName: selectedRendering.componentName,
       renderingId: selectedRendering.renderingId,
+      instanceId: selectedRendering.instanceId,
       experienceId: selectedExperience.id,
       friendlyId,
       contentMap: filteredContentMap,
