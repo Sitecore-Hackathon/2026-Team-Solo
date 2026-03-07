@@ -6,7 +6,7 @@
     "dev": "turbo run dev --filter=marketplace",
     "build": "turbo run build",
     "build:marketplace": "turbo run build --filter=marketplace",
-    "build:sdk": "turbo run build --filter=sdk",
+    "build:sdk": "turbo run build --filter=personalize-connect-sdk",
     "publish:sdk": "pnpm --filter personalize-connect-sdk publish",
     "start": "turbo run start --filter=marketplace",
     "lint": "turbo run lint"

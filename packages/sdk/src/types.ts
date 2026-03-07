@@ -51,8 +51,14 @@ export interface PersonalizeConnectProviderProps {
   language?: string;
   currencyCode?: string;
   timeout?: number;
-  /** Custom function to fetch datasource fields by item ID (e.g. via GraphQL or Layout Service) */
+  /** Custom function to fetch datasource fields by item ID. When omitted and edgeUrl + apiKey are set, the SDK resolves via Experience Edge. */
   resolveDatasource?: (datasourceId: string) => Promise<ComponentFields>;
+  /** Experience Edge GraphQL endpoint (e.g. GRAPH_QL_ENDPOINT). Enables built-in datasource resolution when resolveDatasource is not provided. */
+  edgeUrl?: string;
+  /** Sitecore API key for Experience Edge (e.g. SITECORE_API_KEY). Required alongside edgeUrl for built-in resolution. */
+  apiKey?: string;
+  /** Override editing mode detection. When true the HOC renders a visual indicator. When omitted the SDK auto-detects Page Builder / Experience Editor. */
+  isEditing?: boolean;
   children: ReactNode;
 }
 
@@ -69,4 +75,5 @@ export interface PersonalizeContextValue {
   timeout: number;
   browserId: string;
   resolveDatasource: (datasourceId: string) => Promise<ComponentFields>;
+  isEditing: boolean;
 }

@@ -36,5 +36,11 @@ export type { GetConfigFromProps } from "./withPersonalizeConnect";
 export { usePersonalizeExperience } from "./usePersonalizeExperience";
 export type { UsePersonalizeExperienceResult } from "./usePersonalizeExperience";
 
+// Edge resolver (built-in datasource resolution via Experience Edge)
+export { createEdgeResolver } from "./edgeResolver";
+
+// Editing detection
+export { isEditingMode, resetEditingDetectionCache } from "./editingDetection";
+
 // Utilities
 export { getBrowserId } from "./browserId";

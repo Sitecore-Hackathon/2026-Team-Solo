@@ -2,6 +2,8 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { getBrowserId } from "./browserId";
+import { createEdgeResolver } from "./edgeResolver";
+import { isEditingMode } from "./editingDetection";
 import type { ComponentFields, PersonalizeConnectProviderProps, PersonalizeContextValue } from "./types";
 
 const PersonalizeContext = createContext<PersonalizeContextValue | null>(null);
@@ -21,15 +23,30 @@ export function PersonalizeProvider({
   language = DEFAULT_LANGUAGE,
   currencyCode = DEFAULT_CURRENCY,
   timeout = DEFAULT_TIMEOUT,
-  resolveDatasource = noopResolver,
+  resolveDatasource,
+  edgeUrl,
+  apiKey,
+  isEditing: isEditingProp,
 }: PersonalizeConnectProviderProps) {
   const [browserId, setBrowserId] = useState<string>("");
+  const [detectedEditing, setDetectedEditing] = useState(false);
 
   useEffect(() => {
     setBrowserId(getBrowserId(clientKey));
   }, [clientKey]);
 
-  const stableResolveDatasource = useCallback(resolveDatasource, [resolveDatasource]);
+  useEffect(() => {
+    if (isEditingProp === undefined) {
+      setDetectedEditing(isEditingMode());
+    }
+  }, [isEditingProp]);
+
+  const effectiveEditing = isEditingProp ?? detectedEditing;
+
+  const effectiveResolver = useCallback(
+    resolveDatasource ?? (edgeUrl && apiKey ? createEdgeResolver(edgeUrl, apiKey, language) : noopResolver),
+    [resolveDatasource, edgeUrl, apiKey, language]
+  );
 
   const effectiveBrowserId = browserId || (typeof window !== "undefined" ? getBrowserId(clientKey) : "");
 
@@ -42,7 +59,8 @@ export function PersonalizeProvider({
       currencyCode,
       timeout,
       browserId: effectiveBrowserId,
-      resolveDatasource: stableResolveDatasource,
+      resolveDatasource: effectiveResolver,
+      isEditing: effectiveEditing,
     }),
     [
       clientKey,
@@ -52,7 +70,8 @@ export function PersonalizeProvider({
       currencyCode,
       timeout,
       effectiveBrowserId,
-      stableResolveDatasource,
+      effectiveResolver,
+      effectiveEditing,
     ]
   );
 
