@@ -22,7 +22,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 ## Video link
 
-⟹ [Replace this Video link](#video-link) — Provide a 2–3 minute video describing purpose, setup, and usage.
+⟹ [Team Solo - Sitecore Connect Video](https://youtu.be/5MMyAoPtXH0)
 
 ## Pre-requisites and Dependencies
 
