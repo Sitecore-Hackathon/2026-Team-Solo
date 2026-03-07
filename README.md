@@ -2,8 +2,8 @@
 
 ## Team name
 
-⟹ Team Solo
-⟹ App Name: Personalize Connect
+⟹ **Team Solo**<br />
+⟹ **App Name:** Personalize Connect
 
 ## Category
 
@@ -30,7 +30,6 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 - **Personalize API credentials** (API Key and Secret) — configured in the Marketplace app via Settings / ConnectWizard and stored in the Sitecore content tree; no environment variables required
 - **Install SDK package in the rendering host** — Follow the [SDK README](packages/sdk/README.md)
 - **Node.js 20+** and **pnpm** for the monorepo
-- **@sitecore-marketplace-sdk/client** and **@sitecore-marketplace-sdk/xmc** (installed via `pnpm install`)
 
 ## Installation instructions
 
@@ -48,9 +47,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
    pnpm run build
    ```
 
-3. **Marketplace app:** Deploy to Netlify (or run locally with `pnpm run dev`). Configure the Sitecore Marketplace to load the app as a Pages sidebar plugin. See `netlify.toml` for build settings.
-
-4. **SDK:** Add to your XM Cloud rendering host (Next.js JSS or Content SDK app):
+3. **SDK:** Add to your XM Cloud rendering host (Next.js JSS or Content SDK app):
 
    ```bash
    pnpm add personalize-connect-sdk
@@ -62,7 +59,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
    pnpm add file:../packages/sdk
    ```
 
-5. Wrap your app with `PersonalizeProvider` and components with `withPersonalizeConnect` (see Usage).
+4. Wrap your app with `PersonalizeProvider` and components with `withPersonalizeConnect` (see Usage).
 
 ### Configuration
 
@@ -89,7 +86,7 @@ In XM Cloud Pages, open the Personalize Connect app from the sidebar. It lists c
 
 ### 3. Personalize Interactive Experience setup
 
-*Coming soon.* A walkthrough of how to configure a Full Stack Interactive Experience in Sitecore Personalize (e.g., create the experience, define variants, and return `contentKey`).
+_Coming soon._ A walkthrough of how to configure a Full Stack Interactive Experience in Sitecore Personalize (e.g., create the experience, define variants, and return `contentKey`).
 
 ### 4. Ensure your experience returns `contentKey`
 
