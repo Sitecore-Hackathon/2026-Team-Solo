@@ -1,0 +1,18 @@
+# Dependencies & build output
+node_modules/
+.next/
+.turbo/
+dist/
+
+# Git
+.git/
+
+# Environment & secrets
+.env
+.env.*
+
+# IDE & OS
+.vs/
+.vscode/
+*.log
+*.cache

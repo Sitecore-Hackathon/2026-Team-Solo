@@ -1,0 +1,80 @@
+# Personalize Connect — LLM Context Overview
+
+This document provides a base overview for AI assistants working in this codebase. Use it to orient quickly and find detailed technical documentation.
+
+---
+
+## What This Application Does
+
+**Personalize Connect** is a zero-code bridge between Sitecore XM Cloud Page Builder components and Sitecore Personalize Full Stack Interactive Experiences.
+
+- **Marketplace app** (Next.js): A sidebar panel in XM Cloud Pages where content editors wire components to Personalize experiences, map content keys to datasources, and publish.
+- **SDK** (npm package): Runtime glue that reads config from layout data, calls `POST /v2/callFlows`, resolves the returned `contentKey` to a datasource, fetches content via GraphQL, and re-renders the component.
+
+Flow: Editor configures in Marketplace → Config stored on rendering layout → SDK at runtime calls Personalize → Personalize returns `contentKey` → SDK swaps datasource → Component re-renders with personalized content.
+
+---
+
+## Monorepo Structure
+
+| Path | Purpose |
+|------|---------|
+| `packages/marketplace/` | Page Builder context panel — Next.js 15 App Router app |
+| `packages/sdk/` | Runtime SDK — `PersonalizeProvider`, `withPersonalizeConnect`, `usePersonalizeExperience` |
+| `docs/` | Technical documentation |
+
+**Tooling:** pnpm workspaces, Turbo (`pnpm run build`, `pnpm run dev`). Marketplace runs on port 5555.
+
+---
+
+## Next.js (Marketplace App)
+
+- **Version:** Next.js 15
+- **Router:** App Router
+- **Entry:** `packages/marketplace/src/app/`
+- **Main route:** `/personalize-connect` — the Page Builder context panel
+- **API routes:** `app/api/personalize/` — proxy to Personalize REST API (test-connection, experiences, experience/[id])
+- **Config:** `next.config.ts` — page extensions `["ts","tsx","js","jsx"]`, `Access-Control-Allow-Private-Network` header for local dev
+
+---
+
+## Blok (Sitecore Design System) — Marketplace UI
+
+The marketplace app uses **Blok** (https://blok.sitecore.com/), Sitecore's design system built on shadcn/ui.
+
+- **Add components:** `npx shadcn@latest add https://blok.sitecore.com/r/theme.json` (theme first), then individual components
+- **Location:** `packages/marketplace/src/components/ui/`
+- **Rule:** Use only Blok/shadcn components — no raw Radix or custom UI libraries
+- **Details:** See `packages/marketplace/BLOK.md` and `.cursor/rules/blok-marketplace.mdc`
+
+---
+
+## Sitecore Marketplace SDK
+
+The marketplace app integrates with Sitecore via:
+
+- `@sitecore-marketplace-sdk/client` — client for marketplace APIs
+- `@sitecore-marketplace-sdk/xmc` — XM Cloud integration
+
+Initialization and page context come from `utils/hooks/useMarketplaceClient.ts`.
+
+---
+
+## Technical Documentation Map
+
+| Document | Location | Contents |
+|----------|----------|----------|
+| Main README | `README.md` | Installation, usage, env vars, quick start |
+| Technical design | `docs/PERSONALIZE_CONNECT.md` | Architecture, API contract, config schema, SDK design, flow diagrams |
+| Blok setup | `packages/marketplace/BLOK.md` | Blok component installation, registry, guidelines |
+| Marketplace app | `packages/marketplace/src/README.md` | Extension point, routes, config storage, project structure |
+| SDK | `packages/sdk/README.md` | Installation, `PersonalizeProvider`, HOC, hook, config shape, exports |
+
+---
+
+## Key Conventions
+
+- **Config storage:** `personalizeConnect` on rendering layout; `contentMap` maps `contentKey` → XMC datasource GUIDs
+- **Personalize contract:** Experiences must return `{ "contentKey": "<string>" }`
+- **Credentials:** API Key/Secret stored in Sitecore; used by both Marketplace app and SDK
+- **Environment:** `NEXT_PUBLIC_PERSONALIZE_CLIENT_KEY`, `NEXT_PUBLIC_PERSONALIZE_POINT_OF_SALE`, `NEXT_PUBLIC_XMC_GRAPHQL_ENDPOINT`
