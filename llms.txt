@@ -66,7 +66,6 @@ Initialization and page context come from `utils/hooks/useMarketplaceClient.ts`.
 |----------|----------|----------|
 | Main README | `README.md` | Installation, usage, env vars, quick start |
 | Technical design | `docs/PERSONALIZE_CONNECT.md` | Architecture, API contract, config schema, SDK design, flow diagrams |
-| Blok setup | `packages/marketplace/BLOK.md` | Blok component installation, registry, guidelines |
 | Marketplace app | `packages/marketplace/src/README.md` | Extension point, routes, config storage, project structure |
 | SDK | `packages/sdk/README.md` | Installation, `PersonalizeProvider`, HOC, hook, config shape, exports |
 

@@ -6,6 +6,8 @@ A public app will be available soon. Once published, organization admins can ins
 
 For technical architecture and SDK design, see [PERSONALIZE_CONNECT.md](PERSONALIZE_CONNECT.md).
 
+> **Note:** Images below are hosted on Sitecore's documentation CDN. If they don't display, see the [References](#references) section for links to the full Sitecore docs with screenshots.
+
 ---
 
 ## Prerequisites
@@ -35,7 +37,13 @@ Verify the app is running by opening `http://localhost:5555` in your browser.
 1. Log in to the [Cloud Portal](https://portal.sitecorecloud.io).
 2. Navigate to **App Studio > Studio**.
 3. Click **Create app**.
+
+   ![App Studio - Create app](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/92bd92cb69564d548c38c3b78462e658?v=40c34943)
+
 4. Enter a name (e.g., "Personalize Connect") and select **Custom** as the app type.
+
+   ![Set name and type](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/70442747576943729d66e4d0ef94a01e?v=ce78e7d6)
+
 5. Click **Create**.
 
 ---
@@ -52,6 +60,10 @@ In the app configuration screen:
 | **Deployment URL** | `http://localhost:5555` |
 | **App Logo URL** | `https://cdn-1.webcatalog.io/catalog/sitecore/sitecore-icon.png?v=1731337318728` (or any 512x512 image) |
 
+![Configure extension point and route](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/d2da3c36914d4b34943ca023f2b5e615?v=cfd5dc08)
+
+![Set deployment URL](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/567a0b08dbf8440686d055fbbf4e5e3e?v=0ece277d)
+
 Click **Activate** in the top-right corner.
 
 ---
@@ -62,6 +74,8 @@ Click **Activate** in the top-right corner.
 2. Click **Install** on your new app.
 3. Select the environment(s) where you want to use it.
 4. Click **Install**.
+
+   ![Install the app](https://delivery-sitecore.sitecorecontenthub.cloud/api/public/content/bd1f3f548a4a40748c039a33b5e14722?v=bf520770)
 
 ---
 

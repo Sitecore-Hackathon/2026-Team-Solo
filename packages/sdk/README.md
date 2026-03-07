@@ -1,5 +1,7 @@
 # Personalize Connect SDK
 
+[![npm](https://img.shields.io/npm/v/personalize-connect-sdk)](https://www.npmjs.com/package/personalize-connect-sdk)
+
 Runtime SDK for [Personalize Connect](https://github.com/Sitecore-Hackathon/2026-Team-Solo) — a zero-code bridge between SitecoreAI components and Sitecore Personalize Full Stack Interactive Experiences.
 
 The SDK reads configuration authored by the Marketplace app (stored in the content tree), calls Personalize for a decision via the Edge proxy, resolves the matching datasource from Experience Edge, and swaps component content — with zero per-component code. In Page Builder, components with personalization get a visual indicator.
@@ -58,6 +60,7 @@ export default withPersonalizeConnect(PromoCard);
 ```
 
 The HOC:
+
 1. Looks up config from the content tree (loaded by the provider on mount)
 2. Renders with the default datasource immediately
 3. Calls Personalize asynchronously for a content decision
@@ -83,32 +86,32 @@ function MyComponent({ rendering }) {
 
 ### SitecoreAI (recommended)
 
-| Prop | Required | Description |
-|------|----------|-------------|
-| `sitecoreEdgeContextId` | Yes | Edge Context ID — drives all Edge proxy calls |
-| `siteName` | Yes | SitecoreAI site name |
-| `sitecoreEdgeUrl` | No | Edge platform URL (defaults to `https://edge-platform.sitecorecloud.io`) |
+| Prop                    | Required | Description                                                              |
+| ----------------------- | -------- | ------------------------------------------------------------------------ |
+| `sitecoreEdgeContextId` | Yes      | Edge Context ID — drives all Edge proxy calls                            |
+| `siteName`              | Yes      | SitecoreAI site name                                                     |
+| `sitecoreEdgeUrl`       | No       | Edge platform URL (defaults to `https://edge-platform.sitecorecloud.io`) |
 
 ### Legacy (direct credentials)
 
-| Prop | Required | Description |
-|------|----------|-------------|
-| `clientKey` | Yes | Personalize API client key |
-| `pointOfSale` | Yes | Point of sale identifier |
-| `edgeUrl` | No | Experience Edge GraphQL endpoint |
-| `apiKey` | No | Sitecore API key for Edge |
+| Prop          | Required | Description                      |
+| ------------- | -------- | -------------------------------- |
+| `clientKey`   | Yes      | Personalize API client key       |
+| `pointOfSale` | Yes      | Point of sale identifier         |
+| `edgeUrl`     | No       | Experience Edge GraphQL endpoint |
+| `apiKey`      | No       | Sitecore API key for Edge        |
 
 ### Common
 
-| Prop | Default | Description |
-|------|---------|-------------|
-| `channel` | `"WEB"` | Channel for Personalize calls |
-| `language` | `"EN"` | Language code |
-| `currencyCode` | `"USD"` | Currency code |
-| `timeout` | `600` | Personalize call timeout (ms) |
-| `debug` | `false` | Enable `[PersonalizeConnect]` console logging |
-| `isEditing` | auto | Override Page Builder editing detection |
-| `sitePath` | auto | Override site root path auto-discovery |
+| Prop                | Default  | Description                                                     |
+| ------------------- | -------- | --------------------------------------------------------------- |
+| `channel`           | `"WEB"`  | Channel for Personalize calls                                   |
+| `language`          | `"EN"`   | Language code                                                   |
+| `currencyCode`      | `"USD"`  | Currency code                                                   |
+| `timeout`           | `600`    | Personalize call timeout (ms)                                   |
+| `debug`             | `false`  | Enable `[PersonalizeConnect]` console logging                   |
+| `isEditing`         | auto     | Override Page Builder editing detection                         |
+| `sitePath`          | auto     | Override site root path auto-discovery                          |
 | `resolveDatasource` | built-in | Custom datasource resolver (overrides built-in Edge resolution) |
 
 ## How Config Loading Works
@@ -120,6 +123,7 @@ The Marketplace app stores configs in the content tree at:
 ```
 
 On mount, the SDK:
+
 1. Reads the page item ID from `__NEXT_DATA__` (JSS layout data)
 2. Queries Edge for the page item's content tree path
 3. Derives the site root path (first 4 path segments)
@@ -134,9 +138,9 @@ Authored by the Marketplace app, stored as JSON in the content tree:
 
 ```ts
 interface PersonalizeConnectConfig {
-  friendlyId: string;                  // Personalize Interactive Experience ID
-  contentMap: Record<string, string>;  // contentKey -> datasource GUID
-  defaultKey: string;                  // Fallback key
+  friendlyId: string; // Personalize Interactive Experience ID
+  contentMap: Record<string, string>; // contentKey -> datasource GUID
+  defaultKey: string; // Fallback key
 }
 ```
 
@@ -145,41 +149,49 @@ interface PersonalizeConnectConfig {
 Pass `debug` to the provider to trace the full flow in the browser console:
 
 ```
-[PersonalizeConnect] Provider mounting { mode: 'Context ID', ... }
-[PersonalizeConnect] BrowserId (edge): from cookie abc123...
-[PersonalizeConnect] Config loader: Auto-discovered site path: /sitecore/content/company/company
-[PersonalizeConnect] Config loader: loaded config for rendering xyz → experience homepage_promo
-[PersonalizeConnect] [PromoCard] Config active: { friendlyId: 'homepage_promo', ... }
-[PersonalizeConnect] callPersonalize [homepage_promo] → contentKey: returning-visitor
-[PersonalizeConnect] [PromoCard] Fields resolved — swapping props.fields
+[PersonalizeConnectSDK] Provider mounting { mode: 'Context ID', ... }
+[PersonalizeConnectSDK] BrowserId (edge): from cookie abc123...
+[PersonalizeConnectSDK] Config loader: Auto-discovered site path: /sitecore/content/company/company
+[PersonalizeConnectSDK] Config loader: loaded config for rendering xyz → experience homepage_promo
+[PersonalizeConnectSDK] [PromoCard] Config active: { friendlyId: 'homepage_promo', ... }
+[PersonalizeConnectSDK] callPersonalize [homepage_promo] → contentKey: returning-visitor
+[PersonalizeConnectSDK] [PromoCard] Fields resolved — swapping props.fields
 ```
 
 ## Exports
 
 **Provider & Context**
+
 - `PersonalizeProvider` — Wrap your app
 - `usePersonalizeContext` — Access context directly
 
 **HOC & Hook**
+
 - `withPersonalizeConnect` — Zero-code personalization HOC
 - `usePersonalizeExperience` — Hook for manual control
 
 **Config**
+
 - `loadPageConfigs` — Load configs from Edge (used internally, exported for advanced use)
 
 **Edge Resolution**
+
 - `createEdgeResolver` — Direct Edge GraphQL resolver (legacy)
 - `createEdgeProxyResolver` — Edge proxy resolver (Context ID mode)
 
 **Browser ID**
+
 - `getBrowserId` — Legacy local cookie
 - `getEdgeBrowserId` — Edge proxy init
 
 **Editing**
+
 - `isEditingMode` — Page Builder detection
 
 **Debug**
+
 - `setDebug`, `isDebugEnabled` — Control logging
 
 **Types**
+
 - `PersonalizeConnectConfig`, `PersonalizeConnectProviderProps`, `PersonalizeContextValue`, `ComponentFields`, `CallFlowsRequest`, etc.
