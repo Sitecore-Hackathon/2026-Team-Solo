@@ -1,17 +1,17 @@
-# Providing Personalize Connect to Other Organizations (Beta)
+# Beta Access for Personalize Connect
 
-This document describes how to beta test Personalize Connect in other SitecoreAI organizations. **A public app will be available soon** — once published, organization admins can install it directly from the [public Marketplace](https://portal.sitecorecloud.io/marketplace) and these steps will no longer be required.
+This document describes how to beta test Personalize Connect in other SitecoreAI organizations. **These steps are for hackathon judges** (and other beta testers) who need to install the app in their own org. **A public app will be available soon** — once published, organization admins can install it directly from the [public Marketplace](https://portal.sitecorecloud.io/marketplace) and these steps will no longer be required.
 
 For technical architecture and setup, see [PERSONALIZE_CONNECT.md](PERSONALIZE_CONNECT.md).
 
 ---
 
-## Beta workflow: Authorize organizations
+## Beta workflow: Request access
 
-To allow another organization to beta test the app:
+To request beta access:
 
-1. In [App Studio](https://portal.sitecorecloud.io), go to the **Organizations** section of the Personalize Connect app configuration.
-2. Authorize the organizations that may install the app.
+1. Email **dylan.young@velir.com**.
+2. Send your **organization ID** to be enabled.
 
 Once authorized, organization admins or owners can install the app from the Marketplace in the Cloud Portal.
 

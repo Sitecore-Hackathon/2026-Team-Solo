@@ -62,7 +62,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 4. Wrap your app with `PersonalizeProvider` and components with `withPersonalizeConnect` (see Usage).
 
-To provide the app to other organizations, see [docs/PROVIDING_APP_TO_ORGS.md](docs/PROVIDING_APP_TO_ORGS.md).
+For hackathon judges and beta testers: steps to install the app in your org are in [docs/beta-access.md](docs/beta-access.md).
 
 ### Configuration
 
