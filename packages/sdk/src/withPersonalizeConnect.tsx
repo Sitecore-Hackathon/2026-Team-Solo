@@ -35,7 +35,7 @@ const BAR_STYLE: CSSProperties = {
   fontSize: "12px",
   fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
   fontWeight: 500,
-  borderRadius: "0 0 6px 6px",
+  borderRadius: "6px 6px 0 0",
   flexWrap: "wrap",
   position: "relative",
   zIndex: 1,
@@ -284,13 +284,13 @@ export function withPersonalizeConnect<P extends object>(
 
       return (
         <Fragment>
-          <WrappedComponent {...editingProps} />
           <PreviewBar
             config={config}
             activeKey={previewKey}
             isLoading={previewLoading}
             onSelect={handlePreviewSelect}
           />
+          <WrappedComponent {...editingProps} />
         </Fragment>
       );
     }
