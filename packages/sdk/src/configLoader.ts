@@ -218,5 +218,8 @@ export async function loadPageConfigs(
   }
 
   groupEnd();
+
+  log("Config loader: result", Object.fromEntries(configs));
+
   return configs;
 }

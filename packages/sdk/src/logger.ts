@@ -3,7 +3,7 @@
  * Enable by passing debug={true} on PersonalizeProvider.
  */
 
-const PREFIX = "[PersonalizeConnect]";
+const PREFIX = "[PersonalizeConnectSDK]";
 
 let enabled = false;
 

@@ -88,7 +88,7 @@ export function withPersonalizeConnect<P extends object>(
           });
           config = fromContext;
         } else if (context.configsLoaded) {
-          log(`[${componentName}] No config in context for rendering uid ${normalizedUid} — passthrough`);
+          log(`[${componentName}] No config match for uid "${normalizedUid}". All configs:`, Object.fromEntries(context.configs));
         } else {
           log(`[${componentName}] Configs still loading for uid ${normalizedUid}...`);
         }
