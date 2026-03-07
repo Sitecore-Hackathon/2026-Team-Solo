@@ -1,10 +1,14 @@
 /**
- * Manages the Sitecore CDP browser ID cookie (bid_<clientKey>).
- * Used for session continuity across Personalize decisions.
+ * Manages the Sitecore CDP browser ID.
+ *
+ * Legacy mode:  cookie bid_<clientKey>, generated locally.
+ * Context ID mode: fetched from Edge proxy /v1/init, stored in cookie sc_<contextId>_personalize.
  */
 
-const COOKIE_PREFIX = "bid_";
-const COOKIE_MAX_AGE = 63072000; // 2 years in seconds
+const LEGACY_COOKIE_PREFIX = "bid_";
+const CONTEXT_COOKIE_PREFIX = "sc_";
+const CONTEXT_COOKIE_SUFFIX = "_personalize";
+const COOKIE_MAX_AGE = 63072000; // 2 years
 const COOKIE_PATH = "/";
 const COOKIE_SAME_SITE = "Lax";
 
@@ -12,7 +16,6 @@ function generateBrowserId(): string {
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID();
   }
-  // Fallback for older environments
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
     const r = (Math.random() * 16) | 0;
     const v = c === "x" ? r : (r & 0x3) | 0x8;
@@ -41,15 +44,77 @@ function setCookie(name: string, value: string): void {
 }
 
 /**
- * Get or create the browser ID for the given client key.
- * Reads from cookie bid_<clientKey>, writes if missing, and returns the value.
+ * Legacy: get or create browser ID from a local cookie keyed by clientKey.
  */
 export function getBrowserId(clientKey: string): string {
-  const cookieName = COOKIE_PREFIX + clientKey;
+  const cookieName = LEGACY_COOKIE_PREFIX + clientKey;
   let bid = getCookie(cookieName);
   if (!bid || typeof bid !== "string" || bid.length < 10) {
     bid = generateBrowserId();
     setCookie(cookieName, bid);
   }
   return bid;
+}
+
+/** Response shape from the Edge proxy /v1/init endpoint */
+export interface EdgeInitResponse {
+  browserId: string;
+  guestId?: string;
+}
+
+let edgeInitPromise: Promise<EdgeInitResponse> | null = null;
+
+/**
+ * Context ID mode: fetch browser ID from the Edge proxy init endpoint.
+ * Checks cookie first; if missing, calls /v1/init and caches the result.
+ */
+export async function getEdgeBrowserId(
+  edgeUrl: string,
+  contextId: string,
+  siteName: string
+): Promise<string> {
+  const cookieName = CONTEXT_COOKIE_PREFIX + contextId + CONTEXT_COOKIE_SUFFIX;
+  const cached = getCookie(cookieName);
+  if (cached && cached.length >= 10) return cached;
+
+  if (!edgeInitPromise) {
+    edgeInitPromise = fetchEdgeInit(edgeUrl, contextId, siteName);
+  }
+
+  try {
+    const result = await edgeInitPromise;
+    setCookie(cookieName, result.browserId);
+    return result.browserId;
+  } catch {
+    const fallback = generateBrowserId();
+    setCookie(cookieName, fallback);
+    return fallback;
+  } finally {
+    edgeInitPromise = null;
+  }
+}
+
+async function fetchEdgeInit(
+  edgeUrl: string,
+  contextId: string,
+  siteName: string
+): Promise<EdgeInitResponse> {
+  const base = edgeUrl.replace(/\/$/, "");
+  const url = `${base}/v1/init?sitecoreContextId=${encodeURIComponent(contextId)}&siteName=${encodeURIComponent(siteName)}`;
+
+  const res = await fetch(url, { method: "GET" });
+  if (!res.ok) {
+    throw new Error(`Edge init failed: ${res.status}`);
+  }
+
+  const data = (await res.json()) as EdgeInitResponse;
+  if (!data.browserId || typeof data.browserId !== "string") {
+    throw new Error("Edge init response missing browserId");
+  }
+  return data;
+}
+
+/** Reset the cached init promise (for testing). */
+export function resetEdgeInitCache(): void {
+  edgeInitPromise = null;
 }

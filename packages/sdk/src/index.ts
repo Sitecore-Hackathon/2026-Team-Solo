@@ -37,10 +37,11 @@ export { usePersonalizeExperience } from "./usePersonalizeExperience";
 export type { UsePersonalizeExperienceResult } from "./usePersonalizeExperience";
 
 // Edge resolver (built-in datasource resolution via Experience Edge)
-export { createEdgeResolver } from "./edgeResolver";
+export { createEdgeResolver, createEdgeProxyResolver } from "./edgeResolver";
 
 // Editing detection
 export { isEditingMode, resetEditingDetectionCache } from "./editingDetection";
 
 // Utilities
-export { getBrowserId } from "./browserId";
+export { getBrowserId, getEdgeBrowserId, resetEdgeInitCache } from "./browserId";
+export type { EdgeInitResponse } from "./browserId";

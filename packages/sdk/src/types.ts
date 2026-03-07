@@ -27,13 +27,13 @@ export interface PersonalizeConnectResponse {
   contentKey: string;
 }
 
-/** What the SDK sends to Personalize /v2/callFlows */
+/** What the SDK sends to Personalize /v2/callFlows (legacy direct mode) */
 export interface CallFlowsRequest {
-  clientKey: string;
+  clientKey?: string;
   channel: string;
   language: string;
   currencyCode: string;
-  pointOfSale: string;
+  pointOfSale?: string;
   browserId: string;
   friendlyId: string;
   params?: {
@@ -45,19 +45,32 @@ export interface CallFlowsRequest {
 
 /** Provider configuration */
 export interface PersonalizeConnectProviderProps {
-  clientKey: string;
-  pointOfSale: string;
+  // --- Context ID path (XM Cloud Edge proxy) ---
+  /** Sitecore Edge Context ID. When provided, all calls route through the Edge proxy. */
+  sitecoreEdgeContextId?: string;
+  /** Edge platform base URL. Defaults to https://edge-platform.sitecorecloud.io */
+  sitecoreEdgeUrl?: string;
+  /** XM Cloud site name, used with Context ID for personalize and init calls. */
+  siteName?: string;
+
+  // --- Legacy direct path (non-XM Cloud or explicit credentials) ---
+  /** Personalize API client key (legacy mode). Not needed when using sitecoreEdgeContextId. */
+  clientKey?: string;
+  /** Point of sale identifier (legacy mode). Not needed when using sitecoreEdgeContextId. */
+  pointOfSale?: string;
+  /** Experience Edge GraphQL endpoint for direct access (legacy). Not needed with Context ID. */
+  edgeUrl?: string;
+  /** Sitecore API key for Experience Edge (legacy). Not needed with Context ID. */
+  apiKey?: string;
+
+  // --- Common ---
   channel?: string;
   language?: string;
   currencyCode?: string;
   timeout?: number;
-  /** Custom function to fetch datasource fields by item ID. When omitted and edgeUrl + apiKey are set, the SDK resolves via Experience Edge. */
+  /** Custom function to fetch datasource fields by item ID. When omitted the SDK resolves via Edge. */
   resolveDatasource?: (datasourceId: string) => Promise<ComponentFields>;
-  /** Experience Edge GraphQL endpoint (e.g. GRAPH_QL_ENDPOINT). Enables built-in datasource resolution when resolveDatasource is not provided. */
-  edgeUrl?: string;
-  /** Sitecore API key for Experience Edge (e.g. SITECORE_API_KEY). Required alongside edgeUrl for built-in resolution. */
-  apiKey?: string;
-  /** Override editing mode detection. When true the HOC renders a visual indicator. When omitted the SDK auto-detects Page Builder / Experience Editor. */
+  /** Override editing mode detection. When true the HOC renders a visual indicator. */
   isEditing?: boolean;
   children: ReactNode;
 }
@@ -76,4 +89,12 @@ export interface PersonalizeContextValue {
   browserId: string;
   resolveDatasource: (datasourceId: string) => Promise<ComponentFields>;
   isEditing: boolean;
+  /** True when operating in Edge Context ID mode */
+  useEdgeProxy: boolean;
+  /** Edge proxy base URL (only set in Context ID mode) */
+  edgeProxyUrl: string;
+  /** Context ID (only set in Context ID mode) */
+  sitecoreEdgeContextId: string;
+  /** Site name (only set in Context ID mode) */
+  siteName: string;
 }

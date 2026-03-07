@@ -1,8 +1,8 @@
 "use client";
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
-import { getBrowserId } from "./browserId";
-import { createEdgeResolver } from "./edgeResolver";
+import { getBrowserId, getEdgeBrowserId } from "./browserId";
+import { createEdgeResolver, createEdgeProxyResolver } from "./edgeResolver";
 import { isEditingMode } from "./editingDetection";
 import type { ComponentFields, PersonalizeConnectProviderProps, PersonalizeContextValue } from "./types";
 
@@ -12,28 +12,40 @@ const DEFAULT_CHANNEL = "WEB";
 const DEFAULT_LANGUAGE = "EN";
 const DEFAULT_CURRENCY = "USD";
 const DEFAULT_TIMEOUT = 600;
+const DEFAULT_EDGE_URL = "https://edge-platform.sitecorecloud.io";
 
 const noopResolver: (id: string) => Promise<ComponentFields> = async () => ({});
 
 export function PersonalizeProvider({
   children,
-  clientKey,
-  pointOfSale,
+  // Context ID mode
+  sitecoreEdgeContextId,
+  sitecoreEdgeUrl = DEFAULT_EDGE_URL,
+  siteName = "",
+  // Legacy mode
+  clientKey = "",
+  pointOfSale = "",
+  edgeUrl,
+  apiKey,
+  // Common
   channel = DEFAULT_CHANNEL,
   language = DEFAULT_LANGUAGE,
   currencyCode = DEFAULT_CURRENCY,
   timeout = DEFAULT_TIMEOUT,
   resolveDatasource,
-  edgeUrl,
-  apiKey,
   isEditing: isEditingProp,
 }: PersonalizeConnectProviderProps) {
+  const useEdgeProxy = Boolean(sitecoreEdgeContextId);
   const [browserId, setBrowserId] = useState<string>("");
   const [detectedEditing, setDetectedEditing] = useState(false);
 
   useEffect(() => {
-    setBrowserId(getBrowserId(clientKey));
-  }, [clientKey]);
+    if (useEdgeProxy) {
+      getEdgeBrowserId(sitecoreEdgeUrl, sitecoreEdgeContextId!, siteName).then(setBrowserId);
+    } else if (clientKey) {
+      setBrowserId(getBrowserId(clientKey));
+    }
+  }, [useEdgeProxy, sitecoreEdgeContextId, sitecoreEdgeUrl, siteName, clientKey]);
 
   useEffect(() => {
     if (isEditingProp === undefined) {
@@ -44,11 +56,18 @@ export function PersonalizeProvider({
   const effectiveEditing = isEditingProp ?? detectedEditing;
 
   const effectiveResolver = useCallback(
-    resolveDatasource ?? (edgeUrl && apiKey ? createEdgeResolver(edgeUrl, apiKey, language) : noopResolver),
-    [resolveDatasource, edgeUrl, apiKey, language]
+    resolveDatasource ??
+      (useEdgeProxy
+        ? createEdgeProxyResolver(sitecoreEdgeUrl, sitecoreEdgeContextId!, language)
+        : edgeUrl && apiKey
+          ? createEdgeResolver(edgeUrl, apiKey, language)
+          : noopResolver),
+    [resolveDatasource, useEdgeProxy, sitecoreEdgeUrl, sitecoreEdgeContextId, edgeUrl, apiKey, language]
   );
 
-  const effectiveBrowserId = browserId || (typeof window !== "undefined" ? getBrowserId(clientKey) : "");
+  const effectiveBrowserId =
+    browserId ||
+    (!useEdgeProxy && clientKey && typeof window !== "undefined" ? getBrowserId(clientKey) : "");
 
   const value: PersonalizeContextValue = useMemo(
     () => ({
@@ -61,6 +80,10 @@ export function PersonalizeProvider({
       browserId: effectiveBrowserId,
       resolveDatasource: effectiveResolver,
       isEditing: effectiveEditing,
+      useEdgeProxy,
+      edgeProxyUrl: useEdgeProxy ? sitecoreEdgeUrl : "",
+      sitecoreEdgeContextId: sitecoreEdgeContextId ?? "",
+      siteName,
     }),
     [
       clientKey,
@@ -72,6 +95,10 @@ export function PersonalizeProvider({
       effectiveBrowserId,
       effectiveResolver,
       effectiveEditing,
+      useEdgeProxy,
+      sitecoreEdgeUrl,
+      sitecoreEdgeContextId,
+      siteName,
     ]
   );
 
