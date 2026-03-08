@@ -24,7 +24,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 ## Video
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/5MMyAoPtXH0" title="Team Solo - Sitecore Connect Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+[![Team Solo - Sitecore Connect Video](https://img.youtube.com/vi/5MMyAoPtXH0/hqdefault.jpg)](https://youtu.be/5MMyAoPtXH0)
 
 [Watch on YouTube](https://youtu.be/5MMyAoPtXH0)
 
