@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
+import { AlertTriangle, CheckCircle2, RefreshCw } from "lucide-react";
 import type { ClientSDK } from "@sitecore-marketplace-sdk/client";
 import type { PersonalizeCredentials } from "@/lib/credentials-store";
 import { getSitePathFromPagePath } from "@/lib/config-store";
@@ -67,6 +68,9 @@ export function PersonalizeConnectContent({
     contentKeys,
     contentMap,
     configMap,
+    templateValid,
+    templateValidating,
+    revalidateExperience,
     handleExperienceSelect,
     handleAddContentKey,
     handleRemoveContentKey,
@@ -93,17 +97,10 @@ export function PersonalizeConnectContent({
     : "pending" as const;
   const stepThreeState = selectedExperience ? "active" as const : "pending" as const;
 
-  const canSave = !!(selectedRendering && selectedExperience);
+  const canSave = !!(selectedRendering && selectedExperience && templateValid === true);
 
   return (
     <div className="flex flex-col p-5">
-      <header className="mb-5">
-        <h1 className="text-base font-semibold">Personalize Connect</h1>
-        <p className="text-xs text-muted-foreground mt-0.5">
-          Link page components to Sitecore Personalize experiences
-        </p>
-      </header>
-
       <div className="flex-1 min-h-0">
         <StepSection
           step={1}
@@ -154,6 +151,60 @@ export function PersonalizeConnectContent({
           />
         </StepSection>
       </div>
+
+      {selectedExperience && templateValid === false && !templateValidating && (
+        <div className="mt-4 flex items-start gap-2.5 rounded-md border border-destructive/30 bg-destructive/5 p-3">
+          <AlertTriangle className="h-4 w-4 shrink-0 text-destructive mt-0.5" />
+          <div className="flex-1 text-sm text-destructive">
+            <p className="font-medium">Invalid API response template</p>
+            <p className="mt-0.5 text-xs opacity-80">
+              Your experience must return a JSON object with a{" "}
+              <code className="rounded bg-destructive/10 px-1 py-0.5 font-mono text-[11px]">contentKey</code>{" "}
+              property matching the keys you defined above. Update the API
+              Response template in Sitecore Personalize and re-verify.
+            </p>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="shrink-0 gap-1.5 text-xs"
+            onClick={revalidateExperience}
+          >
+            <RefreshCw className="h-3 w-3" />
+            Re-verify
+          </Button>
+        </div>
+      )}
+
+      {selectedExperience && templateValid === true && !templateValidating && (
+        <div className="mt-4 flex items-center gap-2.5 rounded-md border border-green-200 bg-green-50 p-3 dark:border-green-800 dark:bg-green-950/30">
+          <CheckCircle2 className="h-4 w-4 shrink-0 text-green-600 dark:text-green-400" />
+          <p className="flex-1 text-sm text-green-700 dark:text-green-300">
+            Experience API response contains{" "}
+            <code className="rounded bg-green-100 px-1 py-0.5 font-mono text-[11px] dark:bg-green-900/40">contentKey</code>.
+          </p>
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            className="shrink-0 gap-1.5 text-xs text-green-600 hover:text-green-700 dark:text-green-400"
+            onClick={revalidateExperience}
+          >
+            <RefreshCw className="h-3 w-3" />
+            Re-verify
+          </Button>
+        </div>
+      )}
+
+      {selectedExperience && templateValidating && (
+        <div className="mt-4 flex items-center gap-2.5 rounded-md border border-border bg-muted/50 p-3">
+          <RefreshCw className="h-4 w-4 shrink-0 text-muted-foreground animate-spin" />
+          <p className="flex-1 text-sm text-muted-foreground">
+            Verifying experience API response template…
+          </p>
+        </div>
+      )}
 
       <div className="pt-4 border-t border-border mt-4 flex justify-between items-center gap-4">
         <Button

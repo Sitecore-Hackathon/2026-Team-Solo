@@ -9,6 +9,7 @@ export interface TreeNode {
   name: string;
   path: string;
   templateName?: string;
+  icon?: string;
   hasChildren?: boolean;
 }
 
@@ -19,6 +20,7 @@ interface GetChildrenResult {
         itemId: string;
         name: string;
         path: string;
+        icon?: string;
         template?: { name: string };
       }>;
     };
@@ -33,6 +35,7 @@ const GET_CHILDREN = `
           itemId
           name
           path
+          icon
           template { name }
         }
       }
@@ -52,23 +55,30 @@ export function useContentTree(
     async (path: string): Promise<TreeNode[]> => {
       if (!client || !sitecoreContextId) return [];
 
-      setLoading(true);
-      setError(null);
-      try {
+      const doFetch = async (p: string) => {
         const result = await executeGraphQL<GetChildrenResult>(
           client,
           sitecoreContextId,
           GET_CHILDREN,
-          { path }
+          { path: p }
         );
+        return result?.item?.children?.nodes ?? [];
+      };
 
-        const nodes = result?.item?.children?.nodes ?? [];
-        return nodes.map((n) => ({
+      setLoading(true);
+      setError(null);
+      try {
+        const rawNodes = await doFetch(path);
+        const childCounts = await Promise.all(
+          rawNodes.map((n) => doFetch(n.path).then((kids) => kids.length > 0))
+        );
+        return rawNodes.map((n, i) => ({
           itemId: n.itemId,
           name: n.name,
           path: n.path,
+          icon: n.icon ?? undefined,
           templateName: n.template?.name,
-          hasChildren: true,
+          hasChildren: childCounts[i],
         }));
       } catch (e) {
         setError(e instanceof Error ? e : new Error(String(e)));

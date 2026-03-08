@@ -26,6 +26,22 @@ function Chevron({ expanded }: { expanded: boolean }) {
   );
 }
 
+function SitecoreIcon({ src }: { src: string }) {
+  return (
+    // eslint-disable-next-line @next/next/no-img-element
+    <img
+      src={src}
+      alt=""
+      width={18}
+      height={18}
+      className="h-[18px] w-[18px] shrink-0 object-contain"
+      onError={(e) => {
+        (e.currentTarget as HTMLImageElement).style.display = "none";
+      }}
+    />
+  );
+}
+
 function FolderIcon({ open }: { open: boolean }) {
   const Icon = open ? FolderOpen : Folder;
   return <Icon className="h-[18px] w-[18px] shrink-0 text-amber-500/90" />;
@@ -33,6 +49,12 @@ function FolderIcon({ open }: { open: boolean }) {
 
 function FileIconEl() {
   return <File className="h-[18px] w-[18px] shrink-0 text-blue-500/90" />;
+}
+
+function ItemIcon({ node, expanded }: { node: TreeNode; expanded: boolean }) {
+  if (node.icon) return <SitecoreIcon src={node.icon} />;
+  if (node.hasChildren) return <FolderIcon open={expanded} />;
+  return <FileIconEl />;
 }
 
 function TreeRow({
@@ -54,14 +76,15 @@ function TreeRow({
 }) {
   const isExpanded = expandedPaths.has(node.path);
   const children = loadedChildren[node.path] ?? [];
-  const hasChildren = children.length > 0 || node.hasChildren;
+  const childrenLoaded = loadedChildren[node.path] !== undefined;
+  const hasChildren = childrenLoaded ? children.length > 0 : (node.hasChildren === true);
   const isSelected = selectedId === node.itemId;
 
   return (
     <div className="flex flex-col">
       <div
         className={cn(
-          "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm cursor-pointer transition-colors min-h-[40px]",
+          "flex items-center gap-3 px-3 py-2.5 text-sm cursor-pointer transition-colors min-h-[40px]",
           "hover:bg-muted",
           isSelected
             ? "bg-muted ring-2 ring-primary text-primary font-medium"
@@ -89,11 +112,7 @@ function TreeRow({
           className="flex-1 flex items-center gap-3 min-w-0 text-left"
           onClick={() => onSelect(node)}
         >
-          {hasChildren ? (
-            <FolderIcon open={isExpanded} />
-          ) : (
-            <FileIconEl />
-          )}
+          <ItemIcon node={node} expanded={isExpanded} />
           <span className="truncate">
             {node.name || node.path.split("/").pop() || "Untitled"}
           </span>

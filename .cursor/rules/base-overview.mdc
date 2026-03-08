@@ -9,6 +9,6 @@ alwaysApply: true
 
 **Monorepo:**
 - `packages/marketplace/` — Next.js 15 App Router app (port 5555), Blok UI, `/personalize-connect` route
-- `packages/sdk/` — `PersonalizeProvider`, `withPersonalizeConnect`, `usePersonalizeExperience`
+- `packages/sdk/` — `PersonalizeProvider`, `withPersonalizeConnect`, `usePersonalizeExperience` (Content SDK: Page Router supported; App Router coming soon)
 
 **Docs:** See `llms.txt` for full overview. Technical design: `docs/PERSONALIZE_CONNECT.md`. Blok: `packages/marketplace/BLOK.md`.

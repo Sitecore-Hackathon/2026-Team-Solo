@@ -15,7 +15,7 @@
 
 - **Module Purpose:** Enable content editors to wire up Personalize decisioning to SitecoreAI components directly from the Page Builder — no developer required. The Marketplace app lets editors select a component, link it to a Personalize Interactive Experience, map content keys to datasources, and publish. The SDK handles runtime decisioning and content swapping automatically.
 - **Why not Web Experiences?** Sitecore Personalize Web Experiences can personalize content, but they inject HTML via client-side JavaScript — causing visible flicker on page load and creating content governance problems. Content lives in Personalize rather than in SitecoreAI, so editors lose the structured authoring, workflow, and publishing controls they depend on. Web Experiences also bypass the component model entirely, making it difficult to maintain brand consistency and audit what's being shown.
-- **What problem was solved:** Personalize Connect solves this by keeping content where it belongs — in SitecoreAI as structured datasources — while using the full power of Personalize Full Stack Interactive Experiences for 1:1 decisioning. The result is a cohesive flow: Personalize decides *who sees what*, SitecoreAI owns *the content they see*, and the Marketplace app wires them together with zero code. No flicker, no governance gaps, no content sprawl across systems.
+- **What problem was solved:** Personalize Connect solves this by keeping content where it belongs — in SitecoreAI as structured datasources — while using the full power of Personalize Full Stack Interactive Experiences for 1:1 decisioning. The result is a cohesive flow: Personalize decides _who sees what_, SitecoreAI owns _the content they see_, and the Marketplace app wires them together with zero code. No flicker, no governance gaps, no content sprawl across systems.
 - **How this module solves it:** Separates concerns cleanly: SitecoreAI owns content, Personalize owns decisioning, and the Marketplace app provides point-and-click wiring. The SDK reads config from the content tree, calls `POST /v2/callFlows` via the Edge proxy, resolves the returned `contentKey` to the correct datasource, fetches content via GraphQL, and re-renders the component. No per-component code or deployments for new experiences.
 
 For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_CONNECT.md](docs/PERSONALIZE_CONNECT.md).
@@ -48,7 +48,7 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
    pnpm run build
    ```
 
-3. **SDK:** Add to your SitecoreAI rendering host (Next.js JSS or Content SDK app):
+3. **SDK:** Add to your SitecoreAI rendering host (Next.js JSS or Content SDK app). Content SDK supports Page Router; App Router support coming soon.
 
    ```bash
    pnpm add personalize-connect-sdk
@@ -69,6 +69,15 @@ Want to try it in your own org? The repo is public — create your own custom ap
 **Personalize credentials** are configured in the Marketplace app, not via environment variables. Use the Connect flow (first-time setup) or the Settings page to enter your Personalize API Key, Secret, and Region. Credentials are stored securely in the Sitecore content tree at `{sitePath}/Settings/PersonalizeConnect/Credentials`.
 
 **Rendering host (SDK):** In SitecoreAI, the SDK uses the Edge proxy — pass `sitecoreEdgeContextId` and `siteName` to `PersonalizeProvider`. No Personalize API credentials are needed in the rendering host; the Edge proxy handles calls server-side using credentials stored in Sitecore.
+
+**Publishing:** For personalization to work on the live site, all of the following must be published:
+
+- **The page** — The page containing the personalized component (and its datasources)
+- **Data > PersonalizeConnect** — The folder (per site) that stores configs and content key mappings (e.g. `config-*` items)
+- **Settings > PersonalizeConnect > Credentials** — Where API credentials are stored
+- **The experience** — The Full Stack Interactive Experience in Sitecore Personalize
+
+<img src="docs/images/pc-changes-to-publish.png" alt="Personalize Connect items to publish — Data/PersonalizeConnect config folder and Settings/PersonalizeConnect/Credentials" width="35%" />
 
 ## Usage instructions
 
@@ -143,6 +152,8 @@ With the Decision Table above, this returns `{ "contentKey": "returning-visitor"
 For more details on the architecture and API contract, see [docs/PERSONALIZE_CONNECT.md](docs/PERSONALIZE_CONNECT.md).
 
 ### 5. Integrate the SDK in your rendering host
+
+> **Note:** Content SDK supports Page Router; App Router support coming soon.
 
 ```tsx
 // app/layout.tsx or _app.tsx

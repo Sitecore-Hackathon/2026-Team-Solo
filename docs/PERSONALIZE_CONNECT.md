@@ -187,6 +187,11 @@ packages/
 
 ## Deferred / Future Scope
 
+| Feature | Status |
+|---------|--------|
+| Page Router (Content SDK) | Supported |
+| App Router (Content SDK) | Coming soon |
+
 | Feature | Why Deferred |
 |---------|--------------|
 | SSG variant pre-rendering | Build pipeline integration; client-side swap proves concept |

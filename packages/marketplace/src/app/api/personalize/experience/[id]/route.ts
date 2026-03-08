@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getFlow } from "@/lib/personalizeApi";
+import { getFlow, extractTemplatesFromFlow } from "@/lib/personalizeApi";
 import {
   exchangeForToken,
   getPersonalizeApiBase,
@@ -49,7 +49,9 @@ export async function POST(
     const token = await exchangeForToken(apiKey, apiSecret);
     const apiBase = getPersonalizeApiBase(region);
     const flow = await getFlow(apiBase, token, id);
-    return NextResponse.json(flow, { headers: CORS_HEADERS });
+    const rawFlow = flow as unknown as Record<string, unknown>;
+    const templates = extractTemplatesFromFlow(rawFlow);
+    return NextResponse.json({ ...flow, templates }, { headers: CORS_HEADERS });
   } catch (e) {
     console.error("Personalize experience fetch error:", e);
     return NextResponse.json(

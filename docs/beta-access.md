@@ -86,7 +86,9 @@ Click **Activate** in the top-right corner.
 
 ## 6. Install the SDK in your rendering host
 
-The Marketplace app configures _which_ components are personalized. The SDK handles the runtime decisioning. Add it to your JSS rendering host:
+The Marketplace app configures _which_ components are personalized. The SDK handles the runtime decisioning. Add it to your JSS or Content SDK rendering host:
+
+> **Note:** Content SDK supports Page Router; App Router support coming soon.
 
 ```bash
 pnpm add personalize-connect-sdk

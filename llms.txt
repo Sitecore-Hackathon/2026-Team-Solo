@@ -8,6 +8,8 @@ This document provides a base overview for AI assistants working in this codebas
 
 **Personalize Connect** is a zero-code bridge between Sitecore XM Cloud Page Builder components and Sitecore Personalize Full Stack Interactive Experiences.
 
+**Note:** Content SDK supports Page Router; App Router support coming soon.
+
 - **Marketplace app** (Next.js): A sidebar panel in XM Cloud Pages where content editors wire components to Personalize experiences, map content keys to datasources, and publish.
 - **SDK** (npm package): Runtime glue that reads config from layout data, calls `POST /v2/callFlows`, resolves the returned `contentKey` to a datasource, fetches content via GraphQL, and re-renders the component.
 

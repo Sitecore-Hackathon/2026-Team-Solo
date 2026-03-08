@@ -16,6 +16,8 @@ Peer dependency: `react` >= 18.
 
 ## Quick Start (SitecoreAI)
 
+> **Note:** Content SDK supports Page Router; App Router support coming soon.
+
 ### 1. Wrap your app with `PersonalizeProvider`
 
 In `_app.tsx` (Pages Router) or `layout.tsx` (App Router):
@@ -91,15 +93,6 @@ function MyComponent({ rendering }) {
 | `sitecoreEdgeContextId` | Yes      | Edge Context ID — drives all Edge proxy calls                            |
 | `siteName`              | Yes      | SitecoreAI site name                                                     |
 | `sitecoreEdgeUrl`       | No       | Edge platform URL (defaults to `https://edge-platform.sitecorecloud.io`) |
-
-### Legacy (direct credentials)
-
-| Prop          | Required | Description                      |
-| ------------- | -------- | -------------------------------- |
-| `clientKey`   | Yes      | Personalize API client key       |
-| `pointOfSale` | Yes      | Point of sale identifier         |
-| `edgeUrl`     | No       | Experience Edge GraphQL endpoint |
-| `apiKey`      | No       | Sitecore API key for Edge        |
 
 ### Common
 

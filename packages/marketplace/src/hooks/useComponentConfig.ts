@@ -39,6 +39,8 @@ export function useComponentConfig({
   const [contentMap, setContentMap] = useState<Record<string, string>>({});
   const [configMap, setConfigMap] = useState<Record<string, boolean>>({});
   const [existingConfig, setExistingConfig] = useState<PersonalizeConnectConfig | null>(null);
+  const [templateValid, setTemplateValid] = useState<boolean | null>(null);
+  const [templateValidating, setTemplateValidating] = useState(false);
 
   useEffect(() => {
     setSelectedRendering(null);
@@ -46,6 +48,7 @@ export function useComponentConfig({
     setExperienceDetail(null);
     setContentKeys([]);
     setContentMap({});
+    setTemplateValid(null);
   }, [pageId]);
 
   useEffect(() => {
@@ -56,6 +59,7 @@ export function useComponentConfig({
         setExperienceDetail(null);
         setContentKeys([]);
         setContentMap({});
+        setTemplateValid(null);
       }
       return;
     }
@@ -85,7 +89,10 @@ export function useComponentConfig({
           : keys);
         setContentMap(map);
         const detail = await fetchExperienceDetail(config.experienceId);
-        if (!stale) setExperienceDetail(detail);
+        if (!stale) {
+          setExperienceDetail(detail);
+          validateTemplates(detail?.templates);
+        }
       } else {
         setSelectedExperience(null);
         setContentKeys([]);
@@ -136,21 +143,53 @@ export function useComponentConfig({
     }));
   }, [selectedRendering?.instanceId, existingConfig]);
 
+  const validateTemplates = useCallback(
+    (templates?: string[]) => {
+      if (!templates || templates.length === 0) {
+        setTemplateValid(false);
+        return false;
+      }
+      const valid = templates.some((t) => t.includes("contentKey"));
+      setTemplateValid(valid);
+      return valid;
+    },
+    []
+  );
+
+  const revalidateExperience = useCallback(async () => {
+    if (!selectedExperience) return;
+    setTemplateValidating(true);
+    try {
+      const detail = await fetchExperienceDetail(selectedExperience.id);
+      setExperienceDetail(detail);
+      validateTemplates(detail?.templates);
+    } finally {
+      setTemplateValidating(false);
+    }
+  }, [selectedExperience, fetchExperienceDetail, validateTemplates]);
+
   const handleExperienceSelect = useCallback(
     async (exp: { id: string; friendlyId?: string; name?: string } | null) => {
       setSelectedExperience(exp);
+      setTemplateValid(null);
       if (!exp) {
         setExperienceDetail(null);
         setContentKeys([]);
         setContentMap({});
         return;
       }
-      const detail = await fetchExperienceDetail(exp.id);
-      setExperienceDetail(detail);
+      setTemplateValidating(true);
+      try {
+        const detail = await fetchExperienceDetail(exp.id);
+        setExperienceDetail(detail);
+        validateTemplates(detail?.templates);
+      } finally {
+        setTemplateValidating(false);
+      }
       setContentKeys([]);
       setContentMap({});
     },
-    [fetchExperienceDetail]
+    [fetchExperienceDetail, validateTemplates]
   );
 
   const handleAddContentKey = useCallback((key: string) => {
@@ -222,6 +261,9 @@ export function useComponentConfig({
     contentMap,
     configMap,
     existingConfig,
+    templateValid,
+    templateValidating,
+    revalidateExperience,
     handleExperienceSelect,
     handleAddContentKey,
     handleRemoveContentKey,

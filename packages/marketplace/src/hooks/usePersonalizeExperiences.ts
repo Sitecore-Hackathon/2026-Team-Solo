@@ -26,6 +26,7 @@ export interface PersonalizeExperienceDetail extends PersonalizeExperience {
     allocation?: number;
     splits?: Array<{ ref?: string; percentage?: number }>;
   };
+  templates?: string[];
 }
 
 export function usePersonalizeExperiences(credentials: PersonalizeCredentials | null) {
