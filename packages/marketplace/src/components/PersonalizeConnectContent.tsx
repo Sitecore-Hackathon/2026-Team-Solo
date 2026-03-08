@@ -167,8 +167,7 @@ export function PersonalizeConnectContent({
           <Button
             type="button"
             variant="outline"
-            size="sm"
-            className="shrink-0 gap-1.5 text-xs"
+            className="shrink-0 gap-1.5 h-8 px-3 text-xs"
             onClick={revalidateExperience}
           >
             <RefreshCw className="h-3 w-3" />
@@ -187,8 +186,7 @@ export function PersonalizeConnectContent({
           <Button
             type="button"
             variant="ghost"
-            size="sm"
-            className="shrink-0 gap-1.5 text-xs text-green-600 hover:text-green-700 dark:text-green-400"
+            className="shrink-0 gap-1.5 h-8 px-3 text-xs text-green-600 hover:text-green-700 dark:text-green-400"
             onClick={revalidateExperience}
           >
             <RefreshCw className="h-3 w-3" />
