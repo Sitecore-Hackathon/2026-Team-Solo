@@ -87,7 +87,7 @@ Want to try it in your own org? The repo is public — create your own custom ap
 
 In SitecoreAI Pages, open the Personalize Connect app from the sidebar. It lists components on the current page. Use the footer to access **Settings** (configure Personalize API credentials) and **Docs** (marketer-facing usage guide).
 
-<img src="docs/images/personalize-connect-ui.png" alt="Personalize Connect configuration panel" width="50%" />
+<img src="docs/images/personalize-connect-ui.png" alt="Personalize Connect configuration panel with component mapping and page preview" width="90%" />
 
 ### 2. Select a component and link an experience
 
@@ -95,6 +95,9 @@ In SitecoreAI Pages, open the Personalize Connect app from the sidebar. It lists
 2. Select the component to personalize (e.g., Promo Card).
 3. Choose a Full Stack Interactive Experience from the dropdown (fetched from Personalize).
 4. Define content keys and map each to an SitecoreAI datasource (e.g., `"new-visitor"` → Welcome Offer, `"returning-visitor"` → Loyalty Deal).
+
+   <img src="docs/images/assign-content-item.png" alt="Assign content item — browse content tree to select datasource" width="50%" />
+
 5. Set the default key (used on initial load and as fallback).
 6. Save. Configuration is stored in the content tree and published with the page.
 
@@ -208,4 +211,4 @@ pnpm run dev   # Starts marketplace app on :5555
 
 ## Comments
 
-Personalize Connect targets the hackathon scope: one component per page, client-side content swap, and anonymous browserId. The architecture is designed to support future enhancements (SSG pre-rendering, multiple components, CDP identity, edge-side decisioning) without rearchitecting the core.
+Thank you to the hackathon judges for your time and consideration.
