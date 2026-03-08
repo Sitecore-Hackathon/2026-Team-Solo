@@ -22,9 +22,11 @@ For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_C
 
 <img src="docs/images/architecture-diagram.png" alt="Personalize Connect architecture — Marketplace App and SDK interacting with SitecoreAI and Sitecore Personalize" width="90%" />
 
-## Video link
+## Video
 
-⟹ [Team Solo - Sitecore Connect Video](https://youtu.be/5MMyAoPtXH0)
+<iframe width="560" height="315" src="https://www.youtube.com/embed/5MMyAoPtXH0" title="Team Solo - Sitecore Connect Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+
+[Watch on YouTube](https://youtu.be/5MMyAoPtXH0)
 
 ## Pre-requisites and Dependencies
 
@@ -98,8 +100,7 @@ In SitecoreAI Pages, open the Personalize Connect app from the sidebar. It lists
 
    <img src="docs/images/assign-content-item.png" alt="Assign content item — browse content tree to select datasource" width="50%" />
 
-5. Set the default key (used on initial load and as fallback).
-6. Save. Configuration is stored in the content tree and published with the page.
+5. Save. Configuration is stored in the content tree and published with the page.
 
 ### 3. Configure a Personalize Interactive Experience
 
