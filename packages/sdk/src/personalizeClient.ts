@@ -14,7 +14,7 @@ const DEFAULT_API_BASE = "https://api.boxever.com";
 export interface CallPersonalizeOptions {
   config: PersonalizeConnectConfig;
   context: PersonalizeContextValue;
-  /** Override API base URL (legacy mode only) */
+  /** Override API base URL (legacy mode only — TODO: remove when cleaning legacy) */
   apiBase?: string;
   componentRef?: string;
   pageRoute?: string;

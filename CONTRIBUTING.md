@@ -61,6 +61,7 @@ pnpm run build
 
 When modifying the SDK (`packages/sdk`):
 
+- **Legacy cleanup:** The SDK contains a legacy 4-key path (`clientKey`, `pointOfSale`, `edgeUrl`, `apiKey`) for non–Context ID setups. Code marked with `TODO: Remove when cleaning legacy` can be removed once we drop backward compatibility. Context ID (`sitecoreEdgeContextId`) is the primary path.
 - Run `pnpm run build` from the root to rebuild.
 - Test against a SitecoreAI JSS rendering host if possible.
 - Update `packages/sdk/README.md` if the public API changes.

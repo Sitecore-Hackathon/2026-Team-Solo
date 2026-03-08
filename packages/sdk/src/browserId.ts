@@ -47,6 +47,7 @@ function setCookie(name: string, value: string): void {
 
 /**
  * Legacy: get or create browser ID from a local cookie keyed by clientKey.
+ * TODO: Remove when cleaning legacy — Edge /v1/init is the primary path.
  */
 export function getBrowserId(clientKey: string): string {
   const cookieName = LEGACY_COOKIE_PREFIX + clientKey;

@@ -50,6 +50,7 @@ export function PersonalizeProvider({
   sitecoreEdgeUrl = DEFAULT_EDGE_URL,
   siteName = "",
   sitePath,
+  // Legacy 4-key path — TODO: remove when cleaning legacy (Context ID is primary)
   clientKey = "",
   pointOfSale = "",
   edgeUrl,

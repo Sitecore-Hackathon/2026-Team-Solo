@@ -27,7 +27,7 @@ export interface PersonalizeConnectResponse {
   contentKey: string;
 }
 
-/** What the SDK sends to Personalize /v2/callFlows (legacy direct mode) */
+/** What the SDK sends to Personalize /v2/callFlows (legacy direct mode — TODO: remove when cleaning legacy) */
 export interface CallFlowsRequest {
   clientKey?: string;
   channel: string;
@@ -54,6 +54,7 @@ export interface PersonalizeConnectProviderProps {
   siteName?: string;
 
   // --- Legacy direct path (non-XM Cloud or explicit credentials) ---
+  // TODO: Remove legacy 4-key path — Context ID is the primary path; legacy kept for backward compat.
   /** Personalize API client key (legacy mode). Not needed when using sitecoreEdgeContextId. */
   clientKey?: string;
   /** Point of sale identifier (legacy mode). Not needed when using sitecoreEdgeContextId. */

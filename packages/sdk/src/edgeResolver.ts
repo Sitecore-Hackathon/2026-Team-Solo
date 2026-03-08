@@ -101,6 +101,7 @@ async function queryEdge(
 
 /**
  * Legacy: creates a resolver that calls Experience Edge directly with an API key.
+ * TODO: Remove when cleaning legacy — createEdgeProxyResolver is the primary path.
  */
 export function createEdgeResolver(
   edgeUrl: string,
