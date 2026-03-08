@@ -20,6 +20,8 @@
 
 For detailed architecture, API contract, and SDK design, see [docs/PERSONALIZE_CONNECT.md](docs/PERSONALIZE_CONNECT.md).
 
+<img src="docs/images/architecture-diagram.png" alt="Personalize Connect architecture — Marketplace App and SDK interacting with SitecoreAI and Sitecore Personalize" width="90%" />
+
 ## Video link
 
 ⟹ [Team Solo - Sitecore Connect Video](https://youtu.be/5MMyAoPtXH0)
